@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.SobrePage"
+             Title="Sobre o Projeto"
+             BackgroundColor="#0B0D17">
+
+    <ScrollView Padding="40">
+        <VerticalStackLayout Spacing="25" MaximumWidthRequest="850" HorizontalOptions="Center">
+            <Border StrokeShape="RoundRectangle 16" Padding="30" BackgroundColor="#131729" Stroke="#8B5CF6" StrokeThickness="1.5">
+                <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+                    <Border StrokeShape="RoundRectangle 6" BackgroundColor="#2E1065" Padding="10,4" HorizontalOptions="Center" StrokeThickness="0">
+                        <Label Text=".NET MAUI • ARQUITETURA ORIENTADA A OBJETOS" FontSize="11" FontAttributes="Bold" TextColor="#C4B5FD" CharacterSpacing="1.5"/>
+                    </Border>
+                    <Label Text="GeekHub Explorer" FontSize="36" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center"/>
+                    <Label Text="Plataforma multi-API com integração cruzada entre cinema e videogames, enciclopédia Pokémon TCG e listas pessoais persistentes."
+                           FontSize="15" TextColor="#94A3B8" HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="20">
+                <Border Grid.Column="0" StrokeShape="RoundRectangle 14" Padding="22" BackgroundColor="#131729" Stroke="#27244D" StrokeThickness="1">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="🧱 Pilares de O.O. Aplicados" FontSize="18" FontAttributes="Bold" TextColor="#F5C518"/>
+                        <Label Text="• Abstração: MidiaBase, IMidiaService&lt;T&gt; e RepositorioLocalService&lt;T&gt;&#10;• Herança: Filme, Jogo e CartaPokemon herdam de MidiaBase&#10;• Polimorfismo: ObterResumoExibicao() sobrescrito em cada mídia&#10;• Encapsulamento: Chaves e HTTP isolados na camada Services"
+                               FontSize="14" LineHeight="1.35" TextColor="#CBD5E1"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1" StrokeShape="RoundRectangle 14" Padding="22" BackgroundColor="#131729" Stroke="#27244D" StrokeThickness="1">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="🧭 Navegação &amp; APIs Integradas" FontSize="18" FontAttributes="Bold" TextColor="#06B6D4"/>
+                        <Label Text="• Cross-API: OMDb API ↔ RAWG.io API conversam entre si&#10;• 3ª API: TCGdex Pokémon API sem chave&#10;• 4 Modos de Navegação: Flyout (lateral), TabBar (abas), Pilha (PushAsync) e Modal (PushModalAsync)"
+                               FontSize="14" LineHeight="1.35" TextColor="#CBD5E1"/>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Button Text="Abrir Resumo Técnico em Janela Modal"
+                    Clicked="AbrirModal_Clicked"
+                    BackgroundColor="#8B5CF6"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    Padding="24,14"
+                    HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

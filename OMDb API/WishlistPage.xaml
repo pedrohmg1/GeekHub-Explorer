@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.WishlistPage"
+             Title="Lista de Desejos"
+             BackgroundColor="#070913">
+
+    <Grid RowDefinitions="Auto, *">
+        <Grid Grid.Row="0" Padding="40,30,40,30">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#231247" Offset="0.0" />
+                    <GradientStop Color="#0D1730" Offset="0.55" />
+                    <GradientStop Color="#070913" Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
+
+            <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Label Text="💜 Minha Wishlist — Jogos para Jogar" FontSize="34" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                <Label Text="Jogos salvos na sua biblioteca (clique no card para ver jogos similares e filmes)"
+                       FontSize="15" HorizontalOptions="Center" TextColor="#94A3B8"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <Label Grid.Row="1"
+               x:Name="MensagemVazia"
+               Text="Sua lista de desejos está vazia. Abra um jogo e clique em '♡ Lista de Desejos' para salvá-lo aqui."
+               FontSize="16"
+               TextColor="#94A3B8"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               IsVisible="False"/>
+
+        <CollectionView Grid.Row="1" x:Name="ListaWishlist" Margin="40,10,40,25"
+                        SelectionMode="Single" SelectionChanged="ListaWishlist_SelectionChanged">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="4" VerticalItemSpacing="22" HorizontalItemSpacing="22" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 14" BackgroundColor="#0E1326" Stroke="#8B5CF6" StrokeThickness="1.5" Padding="14" HeightRequest="365">
+                        <VerticalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" HeightRequest="175">
+                                <Image Source="{Binding ImagemUrl}" Aspect="AspectFill"/>
+                            </Border>
+                            <Label Text="{Binding Titulo}" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" HorizontalTextAlignment="Center" MaxLines="1" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding Ano}" FontSize="13" TextColor="#06B6D4" HorizontalOptions="Center"/>
+                            <Button Text="✕ Remover"
+                                    Clicked="RemoverWishlist_Clicked"
+                                    CommandParameter="{Binding Id}"
+                                    BackgroundColor="#7F1D1D"
+                                    TextColor="#FCA5A5"
+                                    FontAttributes="Bold"
+                                    FontSize="12"
+                                    CornerRadius="8"
+                                    Padding="12,6"
+                                    Margin="0,6,0,0"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

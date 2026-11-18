@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.JogoDetalhesPage"
+             Title="Detalhes do Jogo"
+             BackgroundColor="#070913">
+
+    <ScrollView Padding="40">
+        <VerticalStackLayout Spacing="25">
+            <Button Text="← Voltar" Clicked="BotaoVoltar_Clicked"
+                    HorizontalOptions="Start" BackgroundColor="#0E1326" BorderColor="#06B6D4" BorderWidth="1" TextColor="#06B6D4" FontAttributes="Bold" CornerRadius="10" Padding="18,10"/>
+
+            <ActivityIndicator x:Name="LoadingDetalhes" Color="#06B6D4" IsVisible="True" IsRunning="True" HorizontalOptions="Center"/>
+
+            <Border x:Name="CartaoJogo" IsVisible="False" StrokeShape="RoundRectangle 16" Padding="32" BackgroundColor="#0E1326" Stroke="#8B5CF6" StrokeThickness="1.5">
+                <Border.Shadow>
+                    <Shadow Brush="#8B5CF6" Offset="0,8" Radius="20" Opacity="0.2"/>
+                </Border.Shadow>
+                <Grid ColumnDefinitions="390, *" ColumnSpacing="35">
+                    <Border Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="#06B6D4" StrokeThickness="1.5" VerticalOptions="Start">
+                        <Image x:Name="CapaJogoDetalhe" HeightRequest="265" Aspect="AspectFill"/>
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="14">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#1E103C" Padding="10,4" HorizontalOptions="Start" StrokeThickness="0">
+                            <Label Text="// GAME TELEMETRY • RAWG" FontSize="11" FontAttributes="Bold" TextColor="#06B6D4" CharacterSpacing="1.2"/>
+                        </Border>
+
+                        <Label x:Name="TituloJogoDetalhe" FontSize="34" FontAttributes="Bold" TextColor="White" />
+                        <Label x:Name="ResumoPolimorfico" FontSize="16" TextColor="#A78BFA" FontAttributes="Italic" />
+                        <BoxView HeightRequest="1" Color="#1E2642" Margin="0,4" />
+                        <Label x:Name="DescricaoJogoDetalhe" FontSize="15" LineHeight="1.3" TextColor="#E2E8F0" MaxLines="8" LineBreakMode="TailTruncation" />
+                        <BoxView HeightRequest="1" Color="#1E2642" Margin="0,4" />
+
+                        <Label x:Name="EstudioJogo" FontSize="14" TextColor="#94A3B8"/>
+                        <Label x:Name="PlataformasJogo" FontSize="14" TextColor="#94A3B8"/>
+
+                        <HorizontalStackLayout Spacing="15" Margin="0,12,0,0">
+                            <Border StrokeShape="RoundRectangle 10" BackgroundColor="#8B5CF6" Padding="16,10" StrokeThickness="0">
+                                <Label x:Name="NotaRawg" FontAttributes="Bold" FontSize="18" TextColor="White" VerticalOptions="Center"/>
+                            </Border>
+
+                            <Button x:Name="BotaoWishlist"
+                                    Text="♡ Lista de Desejos"
+                                    Clicked="BotaoWishlist_Clicked"
+                                    BackgroundColor="#18203C"
+                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    Padding="20,12"
+                                    CornerRadius="10"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- SEÇÃO 1: JOGOS SIMILARES PARA JOGAR -->
+            <Border x:Name="SecaoJogosSimilares" IsVisible="False" StrokeShape="RoundRectangle 16" Padding="24" BackgroundColor="#0C1122" Stroke="#1E3A5F" StrokeThickness="1.5">
+                <VerticalStackLayout Spacing="15">
+                    <HorizontalStackLayout Spacing="10">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#083344" Padding="8,4" StrokeThickness="0">
+                            <Label Text="RECOMMENDATION AI" FontSize="10" FontAttributes="Bold" TextColor="#22D3EE" CharacterSpacing="1.2"/>
+                        </Border>
+                        <Label Text="🕹️ Jogos Similares para você jogar (RAWG API)" FontSize="20" FontAttributes="Bold" TextColor="White" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <CollectionView x:Name="ListaJogosSimilares" HeightRequest="265"
+                                    SelectionMode="Single" SelectionChanged="ListaJogosSimilares_SelectionChanged">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="16" />
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border StrokeShape="RoundRectangle 12" BackgroundColor="#131B33" Stroke="#06B6D4" StrokeThickness="1" Padding="12" WidthRequest="225">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" HeightRequest="145">
+                                            <Image Source="{Binding ImagemUrl}" Aspect="AspectFill"/>
+                                        </Border>
+                                        <Label Text="{Binding Titulo}" FontSize="14" FontAttributes="Bold" TextColor="White" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                        <Label Text="{Binding Ano}" FontSize="12" TextColor="#22D3EE" FontAttributes="Bold"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- SEÇÃO 2: INTEGRAÇÃO ENTRE APIS — FILMES RELACIONADOS -->
+            <Border x:Name="SecaoFilmesRelacionados" IsVisible="False" StrokeShape="RoundRectangle 16" Padding="24" BackgroundColor="#141318" Stroke="#3F3314" StrokeThickness="1.5">
+                <VerticalStackLayout Spacing="15">
+                    <HorizontalStackLayout Spacing="10">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#33270B" Padding="8,4" StrokeThickness="0">
+                            <Label Text="CROSS-API LINK" FontSize="10" FontAttributes="Bold" TextColor="#F5C518" CharacterSpacing="1.2"/>
+                        </Border>
+                        <Label Text="🎬 Filmes e Séries relacionados (OMDb API)" FontSize="20" FontAttributes="Bold" TextColor="White" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <CollectionView x:Name="ListaFilmesRelacionados" HeightRequest="315"
+                                    SelectionMode="Single" SelectionChanged="ListaFilmesRelacionados_SelectionChanged">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="16" />
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border StrokeShape="RoundRectangle 12" BackgroundColor="#1C1B22" Stroke="#4D3E14" StrokeThickness="1" Padding="12" WidthRequest="195">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" HeightRequest="210">
+                                            <Image Source="{Binding ImagemUrl}" Aspect="AspectFit"/>
+                                        </Border>
+                                        <Label Text="{Binding Titulo}" FontSize="14" FontAttributes="Bold" TextColor="White" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                        <Label Text="{Binding Ano}" FontSize="12" TextColor="#F5C518" FontAttributes="Bold"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.PokemonDetalhesPage"
+             Title="Detalhes da Carta"
+             BackgroundColor="#0F111A">
+
+    <ScrollView Padding="40">
+        <VerticalStackLayout Spacing="25">
+            <Button Text="← Voltar à Pokédex" Clicked="BotaoVoltar_Clicked"
+                    HorizontalOptions="Start" BackgroundColor="#181B29" BorderColor="#EF4444" BorderWidth="1" TextColor="#FCA5A5" FontAttributes="Bold" CornerRadius="10" Padding="18,10"/>
+
+            <ActivityIndicator x:Name="LoadingDetalhes" Color="#EF4444" IsVisible="True" IsRunning="True" HorizontalOptions="Center"/>
+
+            <Border x:Name="CartaoPokemon" IsVisible="False" StrokeShape="RoundRectangle 16" Padding="32" BackgroundColor="#181B29" Stroke="#EF4444" StrokeThickness="1.5">
+                <Border.Shadow>
+                    <Shadow Brush="#EF4444" Offset="0,8" Radius="20" Opacity="0.2"/>
+                </Border.Shadow>
+                <Grid ColumnDefinitions="330, *" ColumnSpacing="35">
+                    <Image Grid.Column="0" x:Name="ImagemCartaDetalhe" HeightRequest="455" Aspect="AspectFit" VerticalOptions="Start"/>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="14">
+                        <HorizontalStackLayout Spacing="8">
+                            <Ellipse WidthRequest="12" HeightRequest="12" Fill="#38BDF8" VerticalOptions="Center"/>
+                            <Ellipse WidthRequest="9" HeightRequest="9" Fill="#FACC15" VerticalOptions="Center"/>
+                            <Label Text="REGISTRO OFICIAL POKÉDEX TCG" FontSize="11" FontAttributes="Bold" TextColor="#FACC15" CharacterSpacing="1.2" VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+
+                        <Label x:Name="NomeCartaDetalhe" FontSize="36" FontAttributes="Bold" TextColor="White" />
+                        <Label x:Name="ResumoPolimorfico" FontSize="16" TextColor="#FCA5A5" FontAttributes="Italic" />
+                        <BoxView HeightRequest="1" Color="#2E334A" Margin="0,4" />
+                        <Label x:Name="DescricaoCarta" FontSize="15" LineHeight="1.3" TextColor="#E2E8F0" />
+                        <BoxView HeightRequest="1" Color="#2E334A" Margin="0,4" />
+
+                        <Label x:Name="HpCarta" FontSize="14" TextColor="#CBD5E1"/>
+                        <Label x:Name="ArtistaCarta" FontSize="14" TextColor="#CBD5E1"/>
+                        <Label x:Name="AtaquesCarta" FontSize="14" TextColor="#CBD5E1"/>
+
+                        <HorizontalStackLayout Spacing="15" Margin="0,12,0,0">
+                            <Border StrokeShape="RoundRectangle 10" BackgroundColor="#EF4444" Padding="16,10" StrokeThickness="0">
+                                <Label x:Name="PrecoCarta" FontAttributes="Bold" FontSize="18" TextColor="White" VerticalOptions="Center"/>
+                            </Border>
+
+                            <Button x:Name="BotaoFavoritarCarta"
+                                    Text="☆ Favoritar Carta"
+                                    Clicked="BotaoFavoritarCarta_Clicked"
+                                    BackgroundColor="#23283D"
+                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    Padding="20,12"
+                                    CornerRadius="10"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

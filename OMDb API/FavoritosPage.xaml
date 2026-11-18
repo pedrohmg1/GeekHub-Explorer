@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.FavoritosPage"
+             Title="Assistir no Futuro"
+             BackgroundColor="#0B0C10">
+
+    <Grid RowDefinitions="Auto, *">
+        <Grid Grid.Row="0" Padding="40,30,40,20">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#271D08" Offset="0.0" />
+                    <GradientStop Color="#0B0C10" Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
+
+            <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Label Text="⭐ Minha Watchlist — Assistir no Futuro" FontSize="34" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                <Label Text="Filmes salvos na sua sessão pessoal (clique no pôster para abrir detalhes e jogos)"
+                       FontSize="15" HorizontalOptions="Center" TextColor="#A1A1AA"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <Label Grid.Row="1"
+               x:Name="MensagemVazia"
+               Text="Sua watchlist está vazia. Abra um filme e clique em '☆ Assistir no Futuro' para salvá-lo aqui."
+               FontSize="16"
+               TextColor="#A1A1AA"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               IsVisible="False"/>
+
+        <CollectionView Grid.Row="1" x:Name="ListaFavoritos" Margin="40,15,40,25"
+                        SelectionMode="Single" SelectionChanged="ListaFavoritos_SelectionChanged">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="4" VerticalItemSpacing="22" HorizontalItemSpacing="22" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 14" BackgroundColor="#14161F" Stroke="#3F3314" StrokeThickness="1.5" Padding="14" HeightRequest="435">
+                        <VerticalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" HeightRequest="245">
+                                <Image Source="{Binding ImagemUrl}" Aspect="AspectFit"/>
+                            </Border>
+                            <Label Text="{Binding Titulo}" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" HorizontalTextAlignment="Center" MaxLines="1" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding Ano}" FontSize="13" TextColor="#F5C518" HorizontalOptions="Center"/>
+                            <Button Text="✕ Remover"
+                                    Clicked="RemoverFavorito_Clicked"
+                                    CommandParameter="{Binding Id}"
+                                    BackgroundColor="#7F1D1D"
+                                    TextColor="#FCA5A5"
+                                    FontAttributes="Bold"
+                                    FontSize="12"
+                                    CornerRadius="8"
+                                    Padding="12,6"
+                                    Margin="0,6,0,0"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

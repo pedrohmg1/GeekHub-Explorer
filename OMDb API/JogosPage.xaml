@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.JogosPage"
+             Title="Jogos"
+             BackgroundColor="#070913">
+
+    <Grid>
+        <CollectionView x:Name="ListaJogos"
+                        SelectionMode="Single" SelectionChanged="ListaJogos_SelectionChanged">
+
+            <!-- Cabeçalho ocupa 100% da largura e dissolve suavemente para baixo -->
+            <CollectionView.Header>
+                <Grid Padding="40,32,40,35">
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#231247" Offset="0.0" />
+                            <GradientStop Color="#0D1730" Offset="0.55" />
+                            <GradientStop Color="#070913" Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
+
+                    <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#1B1336" Stroke="#06B6D4" StrokeThickness="1" Padding="14,5" HorizontalOptions="Center">
+                            <Label Text="⚡ NEXUS ARCADE // RAWG DATABASE" FontSize="11" FontAttributes="Bold" TextColor="#06B6D4" CharacterSpacing="1.8"/>
+                        </Border>
+
+                        <Label Text="Central Gamer &amp; Descobertas" FontSize="38" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                        <Label Text="Pesquise jogos, explore títulos similares e encontre adaptações para o cinema" FontSize="15" HorizontalOptions="Center" TextColor="#94A3B8"/>
+
+                        <Border StrokeShape="RoundRectangle 12" Padding="14,10" BackgroundColor="#0E1326" Stroke="#8B5CF6" StrokeThickness="1.5" HorizontalOptions="Center" WidthRequest="540" Margin="0,8,0,0">
+                            <Border.Shadow>
+                                <Shadow Brush="#8B5CF6" Offset="0,4" Radius="16" Opacity="0.25"/>
+                            </Border.Shadow>
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🎮" FontSize="18" VerticalOptions="Center"/>
+                                <Entry x:Name="JogoEntry" Placeholder="Ex.: Hollow Knight, GTA, Resident Evil, Cyberpunk..." PlaceholderColor="#64748B" TextColor="White" WidthRequest="470" TextChanged="JogoEntry_TextChanged" />
+                            </HorizontalStackLayout>
+                        </Border>
+
+                        <ActivityIndicator x:Name="LoadingIndicator" Color="#06B6D4" IsVisible="False" IsRunning="False" HorizontalOptions="Center" Margin="0,10,0,0"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </CollectionView.Header>
+
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="4" VerticalItemSpacing="0" HorizontalItemSpacing="0" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="14,10">
+                        <Border StrokeShape="RoundRectangle 14" BackgroundColor="#0E1326" Stroke="#27244D" StrokeThickness="1.5" Padding="14" HeightRequest="335">
+                            <Border.Shadow>
+                                <Shadow Brush="Black" Offset="0,8" Radius="14" Opacity="0.5"/>
+                            </Border.Shadow>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal" />
+                                    <VisualState Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Property="Stroke" Value="#06B6D4" />
+                                            <Setter Property="BackgroundColor" Value="#141B36" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
+                            <VerticalStackLayout Spacing="10" VerticalOptions="Center">
+                                <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" HeightRequest="185">
+                                    <Image Source="{Binding ImagemUrl}" Aspect="AspectFill"/>
+                                </Border>
+
+                                <Label Text="{Binding Titulo}" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" HorizontalTextAlignment="Center" MaxLines="2" LineBreakMode="TailTruncation"/>
+
+                                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                    <Border StrokeShape="RoundRectangle 6" BackgroundColor="#1A153A" Stroke="#8B5CF6" StrokeThickness="1" Padding="8,2">
+                                        <Label Text="{Binding Ano}" FontSize="12" FontAttributes="Bold" TextColor="#C4B5FD"/>
+                                    </Border>
+                                    <Border StrokeShape="RoundRectangle 6" BackgroundColor="#0D2636" Stroke="#06B6D4" StrokeThickness="1" Padding="8,2">
+                                        <Label Text="{Binding Nota, StringFormat='★ {0}'}" FontSize="12" FontAttributes="Bold" TextColor="#67E8F9"/>
+                                    </Border>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.PokemonFavoritosPage"
+             Title="Cartas Favoritas"
+             BackgroundColor="#0F111A">
+
+    <Grid RowDefinitions="Auto, *">
+        <Grid Grid.Row="0" Padding="40,30,40,30">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#4C0B10" Offset="0.0" />
+                    <GradientStop Color="#231324" Offset="0.55" />
+                    <GradientStop Color="#0F111A" Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
+
+            <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Label Text="❤️ Meu Fichário — Cartas Pokémon Favoritas" FontSize="34" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+                <Label Text="Cartas guardadas na sua coleção pessoal (clique na carta para abrir a ficha)"
+                       FontSize="15" HorizontalOptions="Center" TextColor="#CBD5E1"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <Label Grid.Row="1"
+               x:Name="MensagemVazia"
+               Text="Seu fichário está vazio. Abra uma carta na aba Pokémon e clique em '☆ Favoritar Carta'."
+               FontSize="16"
+               TextColor="#CBD5E1"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               IsVisible="False"/>
+
+        <CollectionView Grid.Row="1" x:Name="ListaCartasFavoritas" Margin="40,10,40,25"
+                        SelectionMode="Single" SelectionChanged="ListaCartasFavoritas_SelectionChanged">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="4" VerticalItemSpacing="22" HorizontalItemSpacing="22" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 14" BackgroundColor="#181B29" Stroke="#FACC15" StrokeThickness="1.5" Padding="14" HeightRequest="435">
+                        <VerticalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Image Source="{Binding ImagemUrl}" HeightRequest="250" Aspect="AspectFit"/>
+                            <Label Text="{Binding Titulo}" FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" HorizontalTextAlignment="Center" MaxLines="1" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding Colecao}" FontSize="13" TextColor="#FACC15" HorizontalOptions="Center" MaxLines="1" LineBreakMode="TailTruncation"/>
+                            <Button Text="✕ Remover"
+                                    Clicked="RemoverCarta_Clicked"
+                                    CommandParameter="{Binding Id}"
+                                    BackgroundColor="#7F1D1D"
+                                    TextColor="#FCA5A5"
+                                    FontAttributes="Bold"
+                                    FontSize="12"
+                                    CornerRadius="8"
+                                    Padding="12,6"
+                                    Margin="0,6,0,0"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

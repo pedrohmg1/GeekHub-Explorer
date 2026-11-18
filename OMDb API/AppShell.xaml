@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="OMDb_API.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:OMDb_API"
+    Title="GeekHub Explorer"
+    FlyoutBehavior="Flyout"
+    FlyoutBackgroundColor="#0D0F18"
+    Shell.BackgroundColor="#11131F"
+    Shell.ForegroundColor="White"
+    Shell.TitleColor="White"
+    Shell.TabBarBackgroundColor="#11131F"
+    Shell.TabBarTitleColor="#F5C518"
+    Shell.TabBarUnselectedColor="#9CA3AF"
+    Shell.TabBarForegroundColor="#F5C518">
+
+    <!-- Cabeçalho estilizado do Menu Lateral (Flyout) -->
+    <Shell.FlyoutHeader>
+        <Grid Padding="24,32" HeightRequest="150">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#2E1065" Offset="0.0" />
+                    <GradientStop Color="#1E1B4B" Offset="0.5" />
+                    <GradientStop Color="#0D0F18" Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
+
+            <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                <Border StrokeShape="RoundRectangle 6" BackgroundColor="#8B5CF6" Padding="8,3" HorizontalOptions="Start" StrokeThickness="0">
+                    <Label Text="CROSS-MEDIA HUB" FontSize="10" FontAttributes="Bold" TextColor="White" CharacterSpacing="1.5"/>
+                </Border>
+                <Label Text="GeekHub Explorer" FontSize="22" FontAttributes="Bold" TextColor="White"/>
+                <Label Text="Filmes • Jogos • Pokémon TCG" FontSize="12" TextColor="#C4B5FD"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <FlyoutItem Title="Explorar Catálogo" FlyoutDisplayOptions="AsSingleItem">
+        <Tab Title="🎬 Filmes">
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" Route="MainPage" />
+        </Tab>
+
+        <Tab Title="🎮 Jogos">
+            <ShellContent ContentTemplate="{DataTemplate local:JogosPage}" Route="JogosPage" />
+        </Tab>
+
+        <Tab Title="🃏 Pokémon">
+            <ShellContent ContentTemplate="{DataTemplate local:PokemonPage}" Route="PokemonPage" />
+        </Tab>
+
+        <Tab Title="⭐ Assistir no Futuro">
+            <ShellContent ContentTemplate="{DataTemplate local:FavoritosPage}" Route="FavoritosPage" />
+        </Tab>
+
+        <Tab Title="💜 Lista de Desejos">
+            <ShellContent ContentTemplate="{DataTemplate local:WishlistPage}" Route="WishlistPage" />
+        </Tab>
+
+        <Tab Title="❤️ Cartas Favoritas">
+            <ShellContent ContentTemplate="{DataTemplate local:PokemonFavoritosPage}" Route="PokemonFavoritosPage" />
+        </Tab>
+    </FlyoutItem>
+
+    <ShellContent
+        Title="ℹ️ Arquitetura O.O. e APIs"
+        ContentTemplate="{DataTemplate local:SobrePage}"
+        Route="SobrePage" />
+
+</Shell>
