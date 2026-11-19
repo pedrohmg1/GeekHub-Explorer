@@ -105,7 +105,6 @@ namespace OMDb_API
 
             try
             {
-                // Coleta todos os IDs já salvos para nunca repetir um item que você já tem
                 var idsSalvos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 idsSalvos.UnionWith(_filmesService.ObterLista().Select(x => x.Id));
                 idsSalvos.UnionWith(_jogosService.ObterLista().Select(x => x.Id));
@@ -119,7 +118,6 @@ namespace OMDb_API
 
                 MidiaBase? itemInedito = null;
 
-                // Tenta até 4 vezes encontrar um item inédito direto nas APIs
                 for (int tentativa = 0; tentativa < 4 && itemInedito == null; tentativa++)
                 {
                     int categoriaSorteada = Random.Shared.Next(4);
@@ -167,11 +165,32 @@ namespace OMDb_API
                     BotaoAbrirDetalhesSorteio.IsVisible = true;
 
                     LabelCategoriaSorteio.Text = _midiaSorteadaAtual.Categoria.ToUpperInvariant();
-                    CapaSorteio.Source = _midiaSorteadaAtual.ImagemUrl;
                     TituloSorteio.Text = _midiaSorteadaAtual.Titulo;
                     ResumoSorteio.Text = _midiaSorteadaAtual.ObterResumoExibicao();
                     StatusSorteio.Text = "✨ Descoberta Inédita (Fora da sua lista)";
                     EstrelasSorteio.Text = $"Nota / Info: {_midiaSorteadaAtual.Nota}";
+
+                    if (_midiaSorteadaAtual.TemCapaValida)
+                    {
+                        CapaSorteio.IsVisible = true;
+                        CapaSorteio.Source = _midiaSorteadaAtual.ImagemUrl;
+                        PlaceholderSemCapaSorteio.IsVisible = false;
+                    }
+                    else
+                    {
+                        CapaSorteio.IsVisible = false;
+                        CapaSorteio.Source = null;
+                        PlaceholderSemCapaSorteio.IsVisible = true;
+                        TituloFallbackCapaSorteio.Text = _midiaSorteadaAtual.Titulo;
+                        IconeSemCapaSorteio.Text = _midiaSorteadaAtual switch
+                        {
+                            Filme => "🎬",
+                            Jogo => "🎮",
+                            CartaPokemon => "🃏",
+                            Livro => "📚",
+                            _ => "🎲"
+                        };
+                    }
 
                     Color corDestaque = _midiaSorteadaAtual switch
                     {
@@ -200,7 +219,7 @@ namespace OMDb_API
                 if (sender is Button btn)
                 {
                     btn.IsEnabled = true;
-                    btn.Text = btn.Text.Contains("Outro") ? "🎲 Sortear Outro" : "🎲 Surpreenda-me";
+                    btn.Text = btn == BotaoSortearOutroModal ? "🎲 Sortear Outro" : "🎲 Surpreenda-me";
                 }
             }
         }

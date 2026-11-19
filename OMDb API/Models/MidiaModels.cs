@@ -32,6 +32,14 @@ namespace OMDb_API.Models
         public string EstrelasPessoaisTexto => NotaPessoal > 0
             ? new string('★', NotaPessoal) + new string('☆', 5 - NotaPessoal)
             : "Sem avaliação";
+
+        [JsonIgnore]
+        public bool TemCapaValida =>
+            !string.IsNullOrWhiteSpace(ImagemUrl) &&
+            !string.Equals(ImagemUrl, "N/A", StringComparison.OrdinalIgnoreCase);
+
+        [JsonIgnore]
+        public bool SemCapa => !TemCapaValida;
     }
 
     public class Filme : MidiaBase
