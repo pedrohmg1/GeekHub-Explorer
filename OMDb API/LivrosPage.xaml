@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.LivrosPage"
+             Title="Livros &amp; HQs"
+             BackgroundColor="#070913">
+
+    <Grid RowDefinitions="Auto, *">
+        <!-- CABEÇALHO E BARRA DE BUSCA -->
+        <VerticalStackLayout Grid.Row="0" Padding="40,30,40,20" Spacing="18" BackgroundColor="#0B0F1F">
+            <HorizontalStackLayout Spacing="12">
+                <Border StrokeShape="RoundRectangle 8" BackgroundColor="#3B0764" Padding="10,5" StrokeThickness="0">
+                    <Label Text="// OPEN LIBRARY ARCHIVE" FontSize="11" FontAttributes="Bold" TextColor="#D8B4FE" CharacterSpacing="1.2"/>
+                </Border>
+                <Label Text="📚 Explorador de Livros, HQs e Mangás" FontSize="26" FontAttributes="Bold" TextColor="White" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <Border StrokeShape="RoundRectangle 12" BackgroundColor="#131933" Stroke="#A855F7" StrokeThickness="1.5" Padding="14,4">
+                    <Entry x:Name="CampoBuscaLivros"
+                           Placeholder="Pesquise livros, HQs ou mangás (ex: Dune, Berserk, Batman, Harry Potter)..."
+                           PlaceholderColor="#64748B"
+                           TextColor="White"
+                           FontSize="15"
+                           Completed="BotaoBuscarLivros_Clicked"/>
+                </Border>
+
+                <Button Grid.Column="1"
+                        Text="🔍 Buscar"
+                        Clicked="BotaoBuscarLivros_Clicked"
+                        BackgroundColor="#9333EA"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        Padding="24,0"/>
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- RESULTADOS -->
+        <ScrollView Grid.Row="1" Padding="40,20">
+            <VerticalStackLayout Spacing="20">
+                <ActivityIndicator x:Name="LoadingLivros" Color="#A855F7" IsVisible="False" IsRunning="False" HorizontalOptions="Center"/>
+
+                <Label x:Name="MensagemStatusLivros"
+                       Text="Digite o nome de um livro, HQ ou mangá acima para explorar."
+                       TextColor="#94A3B8"
+                       FontSize="16"
+                       HorizontalOptions="Center"
+                       Margin="0,40,0,0"/>
+
+                <CollectionView x:Name="ListaResultadosLivros"
+                                SelectionMode="Single"
+                                SelectionChanged="ListaResultadosLivros_SelectionChanged">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="4" HorizontalItemSpacing="18" VerticalItemSpacing="18"/>
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeShape="RoundRectangle 14" BackgroundColor="#121629" Stroke="#7E22CE" StrokeThickness="1" Padding="14">
+                                <VerticalStackLayout Spacing="8">
+                                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" HeightRequest="240" BackgroundColor="#0B0F1F">
+                                        <Image Source="{Binding ImagemUrl}" Aspect="AspectFit"/>
+                                    </Border>
+                                    <Label Text="{Binding Titulo}" FontSize="15" FontAttributes="Bold" TextColor="White" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                    <Label Text="{Binding Autor}" FontSize="13" TextColor="#D8B4FE" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                    <Label Text="{Binding Ano}" FontSize="12" TextColor="#94A3B8"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

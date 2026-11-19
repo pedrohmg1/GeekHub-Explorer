@@ -1,5 +1,4 @@
 using OMDb_API.Models;
-using OMDb_API.Services;
 using System.Text.Json;
 
 namespace OMDb_API.Services
@@ -114,7 +113,6 @@ namespace OMDb_API.Services
         public async Task<List<Jogo>> BuscarPorNomeAsync(string termo)
         {
             string termoLimpo = termo.Trim();
-            // search_precise=true remove jogos nada a ver; exclude_additions=true remove DLCs soltas
             string url = $"https://api.rawg.io/api/games?key={ApiKey}&search={Uri.EscapeDataString(termoLimpo)}&search_precise=true&exclude_additions=true&page_size=35";
             string json = await _httpClient.GetStringAsync(url);
             var dto = JsonSerializer.Deserialize<RawgSearchResponseDto>(json);
@@ -122,12 +120,10 @@ namespace OMDb_API.Services
             if (dto?.Results == null)
                 return new List<Jogo>();
 
-            // Filtra jogos oficiais com relevância real (descarta projetos amadores/fangames com poucos registros)
             var filtrados = dto.Results
                 .Where(g => EhJogoSeguro(g) && g.Added >= 15)
                 .ToList();
 
-            // Fallback caso o usuário pesquise um jogo indie muito específico
             if (!filtrados.Any())
             {
                 filtrados = dto.Results.Where(EhJogoSeguro).ToList();
@@ -273,7 +269,7 @@ namespace OMDb_API.Services
     }
 
     // ==========================================
-    // SERVIÇO 4: REPOSITÓRIO GENÉRICO (HERANÇA + GENERICS)
+    // SERVIÇO 4: REPOSITÓRIO GENÉRICO LOCAL (HERANÇA + GENERICS)
     // ==========================================
     public abstract class RepositorioLocalService<T> where T : MidiaBase
     {
@@ -299,6 +295,11 @@ namespace OMDb_API.Services
             return ObterLista().Any(item => item.Id == id);
         }
 
+        public T? ObterItem(string id)
+        {
+            return ObterLista().FirstOrDefault(item => item.Id == id);
+        }
+
         public bool AlternarItem(T item)
         {
             var lista = ObterLista();
@@ -311,10 +312,24 @@ namespace OMDb_API.Services
                 return false;
             }
 
-            item.DataAdicionado = DateTime.Now.ToString("dd/MM/yyyy");
+            item.DataAdicionado = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+            item.TimestampAdicionado = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             lista.Insert(0, item);
             SalvarLista(lista);
             return true;
+        }
+
+        public void AtualizarAvaliacaoPessoal(string id, string status, int notaPessoal, string anotacao)
+        {
+            var lista = ObterLista();
+            var item = lista.FirstOrDefault(x => x.Id == id);
+            if (item != null)
+            {
+                item.StatusConsumo = status;
+                item.NotaPessoal = notaPessoal;
+                item.AnotacaoPessoal = anotacao;
+                SalvarLista(lista);
+            }
         }
 
         public void Remover(string id)
@@ -335,7 +350,6 @@ namespace OMDb_API.Services
     public class ListaDesejosService : RepositorioLocalService<Jogo>
     {
         protected override string StorageKey => "jogos_lista_desejos";
-
     }
 
     // Especialização 3: Cartas Pokémon Favoritas
@@ -343,93 +357,212 @@ namespace OMDb_API.Services
     {
         protected override string StorageKey => "pokemon_cartas_favoritas";
     }
-}
 
-
-// ==========================================
-// SERVIÇO 5: TCGDEX POKÉMON API (SEM CHAVE E ESTÁVEL)
-// ==========================================
-public class PokemonService : IMidiaService<CartaPokemon>
-{
-    private readonly HttpClient _httpClient = new()
+    // Especialização 4: Livros Favoritos
+    public class LivrosFavoritosService : RepositorioLocalService<Livro>
     {
-        Timeout = TimeSpan.FromSeconds(15)
-    };
-
-    public async Task<List<CartaPokemon>> BuscarPorNomeAsync(string termo)
-    {
-        string termoLimpo = Uri.EscapeDataString(termo.Trim());
-        string url = $"https://api.tcgdex.net/v2/en/cards?name={termoLimpo}";
-
-        HttpResponseMessage response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException($"A API Pokémon respondeu com status {(int)response.StatusCode}.");
-        }
-
-        string json = await response.Content.ReadAsStringAsync();
-        var lista = JsonSerializer.Deserialize<List<TcgdexCardResumoDto>>(json);
-
-        if (lista == null)
-            return new List<CartaPokemon>();
-
-        return lista
-            .Where(c => !string.IsNullOrEmpty(c.Image))
-            .Take(16)
-            .Select(c => new CartaPokemon
-            {
-                Id = c.Id ?? string.Empty,
-                Titulo = c.Name ?? "Sem nome",
-                ImagemUrl = $"{c.Image}/low.png",
-                Colecao = $"Código: {c.Id}"
-            })
-            .ToList();
+        protected override string StorageKey => "livros_favoritos";
     }
 
-    public async Task<CartaPokemon?> ObterDetalhesAsync(string id)
+    // ==========================================
+    // SERVIÇO AUXILIAR: HISTÓRICO DE BUSCAS POR ABA
+    // ==========================================
+    public static class HistoricoBuscaService
     {
-        string url = $"https://api.tcgdex.net/v2/en/cards/{Uri.EscapeDataString(id)}";
-        HttpResponseMessage response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-            return null;
-
-        string json = await response.Content.ReadAsStringAsync();
-        var c = JsonSerializer.Deserialize<TcgdexCardDetalheDto>(json);
-
-        if (c == null)
-            return null;
-
-        string ataquesFormatados = "Nenhum ataque listado";
-        if (c.Attacks != null && c.Attacks.Any())
+        public static List<string> ObterHistorico(string categoria)
         {
-            ataquesFormatados = string.Join(" | ", c.Attacks.Select(a =>
-            {
-                string dano = (a.Damage.HasValue && a.Damage.Value.ValueKind != JsonValueKind.Null)
-                    ? a.Damage.Value.ToString()
-                    : "";
-                return string.IsNullOrEmpty(dano) ? (a.Name ?? "") : $"{a.Name} ({dano})";
-            }));
+            string json = Preferences.Default.Get($"historico_{categoria}", string.Empty);
+            if (string.IsNullOrWhiteSpace(json))
+                return new List<string>();
+
+            return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
         }
 
-        return new CartaPokemon
+        public static void RegistrarBusca(string categoria, string termo)
         {
-            Id = c.Id ?? id,
-            Titulo = c.Name ?? "Sem nome",
-            Ano = (!string.IsNullOrEmpty(c.Set?.ReleaseDate) && c.Set.ReleaseDate.Length >= 4)
-                ? c.Set.ReleaseDate[..4]
-                : "N/A",
-            ImagemUrl = !string.IsNullOrEmpty(c.Image) ? $"{c.Image}/high.png" : string.Empty,
-            Hp = c.Hp.HasValue ? $"HP {c.Hp.Value}" : "N/A",
-            Nota = c.Hp.HasValue ? $"HP {c.Hp.Value}" : "N/A",
-            Tipos = c.Types != null && c.Types.Any() ? string.Join(", ", c.Types) : "Incolor",
-            Colecao = c.Set?.Name ?? "Coleção Oficial",
-            Raridade = c.Rarity ?? "Padrão",
-            Artista = c.Illustrator ?? "Desconhecido",
-            FlavorText = !string.IsNullOrWhiteSpace(c.Description)
-                ? $"\"{c.Description}\""
-                : "Carta oficial do Pokémon Trading Card Game.",
-            Ataques = ataquesFormatados,
-            PrecoMercado = c.Rarity ?? "Carta Oficial"
+            if (string.IsNullOrWhiteSpace(termo)) return;
+
+            var lista = ObterHistorico(categoria);
+            lista.RemoveAll(x => string.Equals(x, termo.Trim(), StringComparison.OrdinalIgnoreCase));
+            lista.Insert(0, termo.Trim());
+
+            if (lista.Count > 5)
+                lista = lista.Take(5).ToList();
+
+            Preferences.Default.Set($"historico_{categoria}", JsonSerializer.Serialize(lista));
+        }
+    }
+
+    // ==========================================
+    // SERVIÇO 5: TCGDEX POKÉMON API (SEM CHAVE E ESTÁVEL)
+    // ==========================================
+    public class PokemonService : IMidiaService<CartaPokemon>
+    {
+        private readonly HttpClient _httpClient = new()
+        {
+            Timeout = TimeSpan.FromSeconds(15)
         };
+
+        public async Task<List<CartaPokemon>> BuscarPorNomeAsync(string termo)
+        {
+            string termoLimpo = Uri.EscapeDataString(termo.Trim());
+            string url = $"https://api.tcgdex.net/v2/en/cards?name={termoLimpo}";
+
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"A API Pokémon respondeu com status {(int)response.StatusCode}.");
+            }
+
+            string json = await response.Content.ReadAsStringAsync();
+            var lista = JsonSerializer.Deserialize<List<TcgdexCardResumoDto>>(json);
+
+            if (lista == null)
+                return new List<CartaPokemon>();
+
+            return lista
+                .Where(c => !string.IsNullOrEmpty(c.Image))
+                .Take(16)
+                .Select(c => new CartaPokemon
+                {
+                    Id = c.Id ?? string.Empty,
+                    Titulo = c.Name ?? "Sem nome",
+                    ImagemUrl = $"{c.Image}/low.png",
+                    Colecao = $"Código: {c.Id}"
+                })
+                .ToList();
+        }
+
+        public async Task<CartaPokemon?> ObterDetalhesAsync(string id)
+        {
+            string url = $"https://api.tcgdex.net/v2/en/cards/{Uri.EscapeDataString(id)}";
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            string json = await response.Content.ReadAsStringAsync();
+            var c = JsonSerializer.Deserialize<TcgdexCardDetalheDto>(json);
+
+            if (c == null)
+                return null;
+
+            string ataquesFormatados = "Nenhum ataque listado";
+            if (c.Attacks != null && c.Attacks.Any())
+            {
+                ataquesFormatados = string.Join(" | ", c.Attacks.Select(a =>
+                {
+                    string dano = (a.Damage.HasValue && a.Damage.Value.ValueKind != JsonValueKind.Null)
+                        ? a.Damage.Value.ToString()
+                        : "";
+                    return string.IsNullOrEmpty(dano) ? (a.Name ?? "") : $"{a.Name} ({dano})";
+                }));
+            }
+
+            return new CartaPokemon
+            {
+                Id = c.Id ?? id,
+                Titulo = c.Name ?? "Sem nome",
+                Ano = (!string.IsNullOrEmpty(c.Set?.ReleaseDate) && c.Set.ReleaseDate.Length >= 4)
+                    ? c.Set.ReleaseDate[..4]
+                    : "N/A",
+                ImagemUrl = !string.IsNullOrEmpty(c.Image) ? $"{c.Image}/high.png" : string.Empty,
+                Hp = c.Hp.HasValue ? $"HP {c.Hp.Value}" : "N/A",
+                Nota = c.Hp.HasValue ? $"HP {c.Hp.Value}" : "N/A",
+                Tipos = c.Types != null && c.Types.Any() ? string.Join(", ", c.Types) : "Incolor",
+                Colecao = c.Set?.Name ?? "Coleção Oficial",
+                Raridade = c.Rarity ?? "Padrão",
+                Artista = c.Illustrator ?? "Desconhecido",
+                FlavorText = !string.IsNullOrWhiteSpace(c.Description)
+                    ? $"\"{c.Description}\""
+                    : "Carta oficial do Pokémon Trading Card Game.",
+                Ataques = ataquesFormatados,
+                PrecoMercado = c.Rarity ?? "Carta Oficial"
+            };
+        }
+    }
+
+    // ==========================================
+    // SERVIÇO 6: OPEN LIBRARY API (LIVROS, HQs E MANGÁS)
+    // ==========================================
+    public class OpenLibraryService : IMidiaService<Livro>
+    {
+        private readonly HttpClient _httpClient = new()
+        {
+            Timeout = TimeSpan.FromSeconds(15)
+        };
+
+        public async Task<List<Livro>> BuscarPorNomeAsync(string termo)
+        {
+            if (string.IsNullOrWhiteSpace(termo))
+                return new List<Livro>();
+
+            string url = $"https://openlibrary.org/search.json?q={Uri.EscapeDataString(termo.Trim())}&limit=20";
+            string json = await _httpClient.GetStringAsync(url);
+            var dto = JsonSerializer.Deserialize<OpenLibrarySearchDto>(json);
+
+            if (dto?.Docs == null)
+                return new List<Livro>();
+
+            return dto.Docs
+                .Where(d => d.CoverId.HasValue && !string.IsNullOrWhiteSpace(d.Key) && !string.IsNullOrWhiteSpace(d.Title))
+                .Take(16)
+                .Select(d => new Livro
+                {
+                    Id = d.Key!.Replace("/works/", ""),
+                    Titulo = d.Title!,
+                    Autor = d.AuthorName != null && d.AuthorName.Any() ? d.AuthorName.First() : "Autor desconhecido",
+                    Ano = d.FirstPublishYear?.ToString() ?? "N/A",
+                    NumeroPaginas = d.NumberOfPagesMedian.HasValue ? $"{d.NumberOfPagesMedian.Value} págs." : "N/A",
+                    ImagemUrl = $"https://covers.openlibrary.org/b/id/{d.CoverId!.Value}-M.jpg"
+                })
+                .ToList();
+        }
+
+        public async Task<Livro?> ObterDetalhesAsync(string id)
+        {
+            string workId = id.StartsWith("/works/") ? id : $"/works/{id}";
+            string url = $"https://openlibrary.org{workId}.json";
+
+            string json = await _httpClient.GetStringAsync(url);
+            var dto = JsonSerializer.Deserialize<OpenLibraryWorkDetailDto>(json);
+
+            if (dto == null)
+                return null;
+
+            string sinopse = "Sem descrição detalhada disponível na Open Library.";
+            if (dto.Description.HasValue)
+            {
+                if (dto.Description.Value.ValueKind == JsonValueKind.String)
+                {
+                    sinopse = dto.Description.Value.GetString() ?? sinopse;
+                }
+                else if (dto.Description.Value.ValueKind == JsonValueKind.Object &&
+                         dto.Description.Value.TryGetProperty("value", out var valProp))
+                {
+                    sinopse = valProp.GetString() ?? sinopse;
+                }
+            }
+
+            string capaUrl = (dto.Covers != null && dto.Covers.Any())
+                ? $"https://covers.openlibrary.org/b/id/{dto.Covers.First()}-L.jpg"
+                : string.Empty;
+
+            return new Livro
+            {
+                Id = id.Replace("/works/", ""),
+                Titulo = dto.Title ?? "Sem título",
+                Sinopse = sinopse,
+                Assuntos = dto.Subjects != null && dto.Subjects.Any()
+                    ? string.Join(", ", dto.Subjects.Take(6))
+                    : "Literatura / HQ",
+                ImagemUrl = capaUrl
+            };
+        }
+
+        public async Task<List<Livro>> BuscarLivrosDoFilmeAsync(string tituloFilme)
+        {
+            var livros = await BuscarPorNomeAsync(tituloFilme.Split(':')[0].Split('-')[0].Trim());
+            return livros.Take(6).ToList();
+        }
     }
 }

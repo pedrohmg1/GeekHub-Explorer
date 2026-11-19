@@ -14,12 +14,24 @@ namespace OMDb_API.Models
         public string ImagemUrl { get; set; } = string.Empty;
         public string Nota { get; set; } = "N/A";
         public string DataAdicionado { get; set; } = string.Empty;
+        public long TimestampAdicionado { get; set; } = 0;
+
+        // Campos para Status, Nota Pessoal e Anotação
+        public string StatusConsumo { get; set; } = "Quero Ver / Jogar / Ler";
+        public int NotaPessoal { get; set; } = 0; // 0 a 5 estrelas
+        public string AnotacaoPessoal { get; set; } = string.Empty;
+
         public abstract string Categoria { get; }
 
         public virtual string ObterResumoExibicao()
         {
             return $"{Titulo} ({Ano}) - Nota: {Nota}";
         }
+
+        [JsonIgnore]
+        public string EstrelasPessoaisTexto => NotaPessoal > 0
+            ? new string('★', NotaPessoal) + new string('☆', 5 - NotaPessoal)
+            : "Sem avaliação";
     }
 
     public class Filme : MidiaBase
@@ -70,6 +82,20 @@ namespace OMDb_API.Models
         public override string ObterResumoExibicao()
         {
             return $"{Colecao} • {Raridade} • Tipo: {Tipos}";
+        }
+    }
+
+    public class Livro : MidiaBase
+    {
+        public override string Categoria => "Livro / HQ";
+        public string Autor { get; set; } = "Autor desconhecido";
+        public string Sinopse { get; set; } = "Sem descrição disponível.";
+        public string Assuntos { get; set; } = "N/A";
+        public string NumeroPaginas { get; set; } = "N/A";
+
+        public override string ObterResumoExibicao()
+        {
+            return $"{Ano} • {Autor}";
         }
     }
 
@@ -186,5 +212,31 @@ namespace OMDb_API.Models
     {
         [JsonPropertyName("name")] public string? Name { get; set; }
         [JsonPropertyName("damage")] public JsonElement? Damage { get; set; }
+    }
+
+    // ==========================================
+    // DTOs — OPEN LIBRARY API (BUSCA + DETALHES)
+    // ==========================================
+    public class OpenLibrarySearchDto
+    {
+        [JsonPropertyName("docs")] public List<OpenLibraryDocDto>? Docs { get; set; }
+    }
+
+    public class OpenLibraryDocDto
+    {
+        [JsonPropertyName("key")] public string? Key { get; set; }
+        [JsonPropertyName("title")] public string? Title { get; set; }
+        [JsonPropertyName("author_name")] public List<string>? AuthorName { get; set; }
+        [JsonPropertyName("first_publish_year")] public int? FirstPublishYear { get; set; }
+        [JsonPropertyName("cover_i")] public int? CoverId { get; set; }
+        [JsonPropertyName("number_of_pages_median")] public int? NumberOfPagesMedian { get; set; }
+    }
+
+    public class OpenLibraryWorkDetailDto
+    {
+        [JsonPropertyName("title")] public string? Title { get; set; }
+        [JsonPropertyName("description")] public JsonElement? Description { get; set; }
+        [JsonPropertyName("subjects")] public List<string>? Subjects { get; set; }
+        [JsonPropertyName("covers")] public List<int>? Covers { get; set; }
     }
 }

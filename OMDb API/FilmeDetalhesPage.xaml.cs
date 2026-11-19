@@ -8,6 +8,7 @@ namespace OMDb_API
         private readonly OmdbService _omdbService = new();
         private readonly CrossMediaService _crossMediaService = new();
         private readonly FavoritosService _favoritosService = new();
+        private readonly OpenLibraryService _openLibraryService = new();
         private Filme? _filmeAtual;
 
         public FilmeDetalhesPage(string imdbId)
@@ -35,11 +36,34 @@ namespace OMDb_API
                     AtualizarVisualBotaoFavorito(_favoritosService.EstaNaLista(_filmeAtual.Id));
                     CartaoFilme.IsVisible = true;
 
-                    var jogosRelacionados = await _crossMediaService.BuscarJogosDoFilmeAsync(_filmeAtual);
-                    if (jogosRelacionados.Any())
+                    // 1. Busca Jogos Relacionados (RAWG API)
+                    try
                     {
-                        ListaJogosRelacionados.ItemsSource = jogosRelacionados;
-                        SecaoJogosRelacionados.IsVisible = true;
+                        var jogosRelacionados = await _crossMediaService.BuscarJogosDoFilmeAsync(_filmeAtual);
+                        if (jogosRelacionados != null && jogosRelacionados.Any())
+                        {
+                            ListaJogosRelacionados.ItemsSource = jogosRelacionados;
+                            SecaoJogosRelacionados.IsVisible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERRO JOGOS RELACIONADOS]: {ex.Message}");
+                    }
+
+                    // 2. Busca Livros e HQs Relacionados (Open Library API)
+                    try
+                    {
+                        var livrosRelacionados = await _openLibraryService.BuscarLivrosDoFilmeAsync(_filmeAtual.Titulo);
+                        if (livrosRelacionados != null && livrosRelacionados.Any())
+                        {
+                            ListaLivrosRelacionados.ItemsSource = livrosRelacionados;
+                            SecaoLivrosRelacionados.IsVisible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERRO OPEN LIBRARY]: {ex.Message}");
                     }
                 }
             }
@@ -84,6 +108,15 @@ namespace OMDb_API
             {
                 ListaJogosRelacionados.SelectedItem = null;
                 await Navigation.PushAsync(new JogoDetalhesPage(jogo.Id));
+            }
+        }
+
+        private async void ListaLivrosRelacionados_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.CurrentSelection.FirstOrDefault() is Livro livroSelecionado)
+            {
+                ListaLivrosRelacionados.SelectedItem = null;
+                await Navigation.PushAsync(new LivroDetalhesPage(livroSelecionado));
             }
         }
 

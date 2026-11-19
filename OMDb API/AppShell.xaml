@@ -31,7 +31,7 @@
                     <Label Text="CROSS-MEDIA HUB" FontSize="10" FontAttributes="Bold" TextColor="White" CharacterSpacing="1.5"/>
                 </Border>
                 <Label Text="GeekHub Explorer" FontSize="22" FontAttributes="Bold" TextColor="White"/>
-                <Label Text="Filmes • Jogos • Pokémon TCG" FontSize="12" TextColor="#C4B5FD"/>
+                <Label Text="Filmes • Jogos • Pokémon • Livros" FontSize="12" TextColor="#C4B5FD"/>
             </VerticalStackLayout>
         </Grid>
     </Shell.FlyoutHeader>
@@ -49,6 +49,10 @@
             <ShellContent ContentTemplate="{DataTemplate local:PokemonPage}" Route="PokemonPage" />
         </Tab>
 
+        <Tab Title="📚 Livros &amp; HQs">
+            <ShellContent ContentTemplate="{DataTemplate local:LivrosPage}" Route="LivrosPage" />
+        </Tab>
+
         <Tab Title="⭐ Assistir no Futuro">
             <ShellContent ContentTemplate="{DataTemplate local:FavoritosPage}" Route="FavoritosPage" />
         </Tab>
@@ -59,6 +63,9 @@
 
         <Tab Title="❤️ Cartas Favoritas">
             <ShellContent ContentTemplate="{DataTemplate local:PokemonFavoritosPage}" Route="PokemonFavoritosPage" />
+        </Tab>
+        <Tab Title="🏆 Meu Perfil Geek">
+            <ShellContent ContentTemplate="{DataTemplate local:PerfilGeekPage}" Route="PerfilGeekPage" />
         </Tab>
     </FlyoutItem>
 

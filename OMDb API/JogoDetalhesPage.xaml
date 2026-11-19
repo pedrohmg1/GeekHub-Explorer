@@ -118,6 +118,7 @@
                     </CollectionView>
                 </VerticalStackLayout>
             </Border>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

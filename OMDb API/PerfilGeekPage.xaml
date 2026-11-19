@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="OMDb_API.PerfilGeekPage"
+             Title="Meu Perfil Geek"
+             BackgroundColor="#070913">
+
+    <Grid>
+        <!-- CONTEÚDO PRINCIPAL DO DASHBOARD -->
+        <ScrollView Padding="40,30">
+            <VerticalStackLayout Spacing="26">
+
+                <!-- CABEÇALHO DO DASHBOARD -->
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="15">
+                    <VerticalStackLayout Spacing="4">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#2E1065" Padding="10,4" HorizontalOptions="Start" StrokeThickness="0">
+                            <Label Text="// DASHBOARD &amp; ANALYTICS" FontSize="11" FontAttributes="Bold" TextColor="#C4B5FD" CharacterSpacing="1.2"/>
+                        </Border>
+                        <Label Text="🏆 Meu Perfil Geek" FontSize="32" FontAttributes="Bold" TextColor="White"/>
+                        <Label x:Name="SubtituloPerfil" Text="Resumo consolidado da sua coleção cross-media" FontSize="15" TextColor="#94A3B8"/>
+                    </VerticalStackLayout>
+
+                    <HorizontalStackLayout Grid.Column="1" Spacing="12" VerticalOptions="Center">
+                        <Button Text="🎲 Surpreenda-me"
+                                Clicked="BotaoSurpreendaMe_Clicked"
+                                BackgroundColor="#7C3AED"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="18,12"/>
+
+                        <Button Text="📤 Exportar Coleção"
+                                Clicked="BotaoExportar_Clicked"
+                                BackgroundColor="#1E293B"
+                                BorderColor="#38BDF8"
+                                BorderWidth="1"
+                                TextColor="#38BDF8"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="18,12"/>
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- 4 CARDS DE CONTADORES DINÂMICOS -->
+                <Grid ColumnDefinitions="*, *, *, *" ColumnSpacing="18">
+                    <Border Grid.Column="0" StrokeShape="RoundRectangle 14" BackgroundColor="#141318" Stroke="#F5C518" StrokeThickness="1.5" Padding="20">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="🎬 FILMES" FontSize="12" FontAttributes="Bold" TextColor="#F5C518"/>
+                            <Label x:Name="ContagemFilmes" Text="0" FontSize="34" FontAttributes="Bold" TextColor="White"/>
+                            <Label Text="na watchlist" FontSize="12" TextColor="#9CA3AF"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" StrokeShape="RoundRectangle 14" BackgroundColor="#101322" Stroke="#06B6D4" StrokeThickness="1.5" Padding="20">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="🎮 JOGOS" FontSize="12" FontAttributes="Bold" TextColor="#06B6D4"/>
+                            <Label x:Name="ContagemJogos" Text="0" FontSize="34" FontAttributes="Bold" TextColor="White"/>
+                            <Label Text="na lista de desejos" FontSize="12" TextColor="#9CA3AF"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="2" StrokeShape="RoundRectangle 14" BackgroundColor="#1A150E" Stroke="#EF4444" StrokeThickness="1.5" Padding="20">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="🃏 POKÉMON TCG" FontSize="12" FontAttributes="Bold" TextColor="#F87171"/>
+                            <Label x:Name="ContagemPokemon" Text="0" FontSize="34" FontAttributes="Bold" TextColor="White"/>
+                            <Label Text="cartas favoritas" FontSize="12" TextColor="#9CA3AF"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="3" StrokeShape="RoundRectangle 14" BackgroundColor="#16111D" Stroke="#A855F7" StrokeThickness="1.5" Padding="20">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="📚 LIVROS &amp; HQs" FontSize="12" FontAttributes="Bold" TextColor="#D8B4FE"/>
+                            <Label x:Name="ContagemLivros" Text="0" FontSize="34" FontAttributes="Bold" TextColor="White"/>
+                            <Label Text="leituras salvas" FontSize="12" TextColor="#9CA3AF"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- BARRAS DE PROGRESSO: AFINIDADE GEEK -->
+                <Border StrokeShape="RoundRectangle 16" BackgroundColor="#0E1324" Stroke="#1E293B" StrokeThickness="1.5" Padding="24">
+                    <VerticalStackLayout Spacing="16">
+                        <HorizontalStackLayout Spacing="10">
+                            <Label Text="📊 DNA Geek:" FontSize="18" FontAttributes="Bold" TextColor="White"/>
+                            <Label x:Name="TituloPerfilDominante" Text="Adicione itens às suas listas para descobrir seu perfil!" FontSize="18" FontAttributes="Bold" TextColor="#F5C518"/>
+                        </HorizontalStackLayout>
+
+                        <Grid ColumnDefinitions="140, *, 60" ColumnSpacing="15" RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="12">
+                            <Label Grid.Row="0" Grid.Column="0" Text="🎬 Cinéfilo" TextColor="#E2E8F0" FontAttributes="Bold" VerticalOptions="Center"/>
+                            <ProgressBar Grid.Row="0" Grid.Column="1" x:Name="BarraFilmes" Progress="0" ProgressColor="#F5C518" VerticalOptions="Center"/>
+                            <Label Grid.Row="0" Grid.Column="2" x:Name="PercFilmes" Text="0%" TextColor="#F5C518" FontAttributes="Bold" HorizontalOptions="End"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="🎮 Gamer" TextColor="#E2E8F0" FontAttributes="Bold" VerticalOptions="Center"/>
+                            <ProgressBar Grid.Row="1" Grid.Column="1" x:Name="BarraJogos" Progress="0" ProgressColor="#06B6D4" VerticalOptions="Center"/>
+                            <Label Grid.Row="1" Grid.Column="2" x:Name="PercJogos" Text="0%" TextColor="#06B6D4" FontAttributes="Bold" HorizontalOptions="End"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Text="🃏 Treinador TCG" TextColor="#E2E8F0" FontAttributes="Bold" VerticalOptions="Center"/>
+                            <ProgressBar Grid.Row="2" Grid.Column="1" x:Name="BarraPokemon" Progress="0" ProgressColor="#EF4444" VerticalOptions="Center"/>
+                            <Label Grid.Row="2" Grid.Column="2" x:Name="PercPokemon" Text="0%" TextColor="#F87171" FontAttributes="Bold" HorizontalOptions="End"/>
+
+                            <Label Grid.Row="3" Grid.Column="0" Text="📚 Leitor / Otaku" TextColor="#E2E8F0" FontAttributes="Bold" VerticalOptions="Center"/>
+                            <ProgressBar Grid.Row="3" Grid.Column="1" x:Name="BarraLivros" Progress="0" ProgressColor="#A855F7" VerticalOptions="Center"/>
+                            <Label Grid.Row="3" Grid.Column="2" x:Name="PercLivros" Text="0%" TextColor="#D8B4FE" FontAttributes="Bold" HorizontalOptions="End"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ATIVIDADE RECENTE -->
+                <Border StrokeShape="RoundRectangle 16" BackgroundColor="#0E1324" Stroke="#1E293B" StrokeThickness="1.5" Padding="24">
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="🕒 Adicionados Recentemente (Todas as Categorias)" FontSize="19" FontAttributes="Bold" TextColor="White"/>
+
+                        <Label x:Name="MensagemSemAtividade"
+                               Text="Nenhum item salvo ainda. Explore Filmes, Jogos, Pokémon ou Livros e salve seus favoritos!"
+                               TextColor="#64748B"
+                               FontSize="14"
+                               IsVisible="False"/>
+
+                        <CollectionView x:Name="ListaAtividadeRecente" HeightRequest="330"
+                                        SelectionMode="Single" SelectionChanged="ListaAtividadeRecente_SelectionChanged">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="16"/>
+                            </CollectionView.ItemsLayout>
+
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="#151C33" Stroke="#334155" StrokeThickness="1" Padding="12" WidthRequest="205">
+                                        <VerticalStackLayout Spacing="6">
+                                            <Border StrokeShape="RoundRectangle 6" BackgroundColor="#1E293B" Padding="6,2" HorizontalOptions="Start" StrokeThickness="0">
+                                                <Label Text="{Binding Categoria}" FontSize="10" FontAttributes="Bold" TextColor="#38BDF8"/>
+                                            </Border>
+                                            <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" HeightRequest="185">
+                                                <Image Source="{Binding ImagemUrl}" Aspect="AspectFit"/>
+                                            </Border>
+                                            <Label Text="{Binding Titulo}" FontSize="14" FontAttributes="Bold" TextColor="White" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                            <Label Text="{Binding StatusConsumo}" FontSize="11" TextColor="#2ECC71" FontAttributes="Bold"/>
+                                            <Label Text="{Binding EstrelasPessoaisTexto}" FontSize="12" TextColor="#F5C518"/>
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- MODAL CUSTOMIZADO DARK/CYBER PARA "SURPREENDA-ME" -->
+        <Grid x:Name="OverlaySurpreendaMe"
+              IsVisible="False"
+              BackgroundColor="#CC05070E"
+              Padding="30">
+
+            <Border StrokeShape="RoundRectangle 20"
+                    BackgroundColor="#121629"
+                    Stroke="#8B5CF6"
+                    StrokeThickness="2"
+                    Padding="28"
+                    MaximumWidthRequest="540"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center">
+                <Border.Shadow>
+                    <Shadow Brush="#7C3AED" Offset="0,8" Radius="28" Opacity="0.45"/>
+                </Border.Shadow>
+
+                <VerticalStackLayout Spacing="18">
+                    <!-- Topo do Modal -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Border StrokeShape="RoundRectangle 6" BackgroundColor="#2E1065" Padding="8,4" StrokeThickness="0">
+                                <Label Text="🎲 ROLETA GEEKHUB" FontSize="11" FontAttributes="Bold" TextColor="#C4B5FD" CharacterSpacing="1.2"/>
+                            </Border>
+                            <Border x:Name="BadgeCategoriaSorteio" StrokeShape="RoundRectangle 6" BackgroundColor="#1E293B" Padding="8,4" StrokeThickness="0">
+                                <Label x:Name="LabelCategoriaSorteio" Text="VIDEOGAME" FontSize="11" FontAttributes="Bold" TextColor="#38BDF8"/>
+                            </Border>
+                        </HorizontalStackLayout>
+
+                        <Button Grid.Column="1"
+                                Text="✕"
+                                Clicked="FecharModalSorteio_Clicked"
+                                BackgroundColor="Transparent"
+                                TextColor="#94A3B8"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                Padding="6,0"/>
+                    </Grid>
+
+                    <!-- Card Visual do Item Sorteado -->
+                    <Grid x:Name="GridItemSorteado" ColumnDefinitions="145, *" ColumnSpacing="20">
+                        <Border x:Name="BordaCapaSorteio" Grid.Column="0" StrokeShape="RoundRectangle 12" Stroke="#7C3AED" StrokeThickness="1.5" HeightRequest="205" BackgroundColor="#0B0F1F">
+                            <Image x:Name="CapaSorteio" Aspect="AspectFit"/>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                            <Label Text="Que tal aproveitar hoje:" FontSize="13" TextColor="#94A3B8"/>
+                            <Label x:Name="TituloSorteio" FontSize="22" FontAttributes="Bold" TextColor="White" MaxLines="2" LineBreakMode="TailTruncation"/>
+                            <Label x:Name="ResumoSorteio" FontSize="13" TextColor="#C4B5FD" FontAttributes="Italic" MaxLines="2" LineBreakMode="TailTruncation"/>
+
+                            <Border x:Name="BadgeStatusSorteio" StrokeShape="RoundRectangle 8" BackgroundColor="#0F291E" Stroke="#2ECC71" StrokeThickness="1" Padding="10,5" HorizontalOptions="Start" Margin="0,4,0,0">
+                                <Label x:Name="StatusSorteio" FontSize="12" FontAttributes="Bold" TextColor="#2ECC71"/>
+                            </Border>
+
+                            <Label x:Name="EstrelasSorteio" FontSize="14" TextColor="#F5C518" FontAttributes="Bold"/>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Mensagem para Coleção Vazia -->
+                    <VerticalStackLayout x:Name="BoxColecaoVaziaSorteio" IsVisible="False" Spacing="10" Padding="12" BackgroundColor="#181E38">
+                        <Label Text="Sua coleção pessoal ainda está vazia! Que tal pesquisar este clássico:" FontSize="14" TextColor="#CBD5E1"/>
+                        <Label x:Name="DicaClassicoSorteio" FontSize="18" FontAttributes="Bold" TextColor="#F5C518"/>
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="1" Color="#1E293B"/>
+
+                    <!-- Botões de Ação -->
+                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
+                        <Button Grid.Column="0"
+                                Text="🎲 Sortear Outro"
+                                Clicked="BotaoSurpreendaMe_Clicked"
+                                BackgroundColor="#1E293B"
+                                BorderColor="#8B5CF6"
+                                BorderWidth="1"
+                                TextColor="#D8B4FE"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="10,12"/>
+
+                        <Button Grid.Column="1"
+                                x:Name="BotaoAbrirDetalhesSorteio"
+                                Text="Abrir Detalhes"
+                                Clicked="BotaoAbrirDetalhesSorteio_Clicked"
+                                BackgroundColor="#7C3AED"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="10,12"/>
+
+                        <Button Grid.Column="2"
+                                Text="Fechar"
+                                Clicked="FecharModalSorteio_Clicked"
+                                BackgroundColor="#14182B"
+                                TextColor="#94A3B8"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="10,12"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -86,6 +86,40 @@
                     </CollectionView>
                 </VerticalStackLayout>
             </Border>
+
+            <!-- SEÇÃO DE LIVROS E HQs ORIGINAIS (OPEN LIBRARY API) -->
+            <Border x:Name="SecaoLivrosRelacionados" IsVisible="False" StrokeShape="RoundRectangle 16" Padding="24" BackgroundColor="#16111D" Stroke="#A855F7" StrokeThickness="1.5">
+                <VerticalStackLayout Spacing="15">
+                    <HorizontalStackLayout Spacing="10">
+                        <Border StrokeShape="RoundRectangle 6" BackgroundColor="#3B0764" Padding="8,4" StrokeThickness="0">
+                            <Label Text="OPEN LIBRARY ARCHIVE" FontSize="10" FontAttributes="Bold" TextColor="#E9D5FF" CharacterSpacing="1.2"/>
+                        </Border>
+                        <Label Text="📚 Livros e HQs Relacionados (Open Library API)" FontSize="20" FontAttributes="Bold" TextColor="White" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
+                    <CollectionView x:Name="ListaLivrosRelacionados" HeightRequest="310"
+                                    SelectionMode="Single" SelectionChanged="ListaLivrosRelacionados_SelectionChanged">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="16" />
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border StrokeShape="RoundRectangle 12" BackgroundColor="#1E1729" Stroke="#7E22CE" StrokeThickness="1" Padding="12" WidthRequest="195">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" HeightRequest="190">
+                                            <Image Source="{Binding ImagemUrl}" Aspect="AspectFit"/>
+                                        </Border>
+                                        <Label Text="{Binding Titulo}" FontSize="14" FontAttributes="Bold" TextColor="White" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                        <Label Text="{Binding Autor}" FontSize="12" TextColor="#D8B4FE" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                        <Label Text="{Binding Ano}" FontSize="11" TextColor="#9CA3AF"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

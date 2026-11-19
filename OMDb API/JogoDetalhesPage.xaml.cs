@@ -20,7 +20,9 @@ namespace OMDb_API
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Carregando detalhes para o ID: {gameId}");
                 _jogoAtual = await _rawgService.ObterDetalhesAsync(gameId);
+
                 if (_jogoAtual != null)
                 {
                     TituloJogoDetalhe.Text = _jogoAtual.Titulo;
@@ -34,23 +36,40 @@ namespace OMDb_API
                     AtualizarVisualBotaoWishlist(_wishlistService.EstaNaLista(_jogoAtual.Id));
                     CartaoJogo.IsVisible = true;
 
-                    var similares = await _rawgService.BuscarJogosSimilaresAsync(_jogoAtual);
-                    if (similares.Any())
+                    // 1. Jogos Similares (RAWG)
+                    try
                     {
-                        ListaJogosSimilares.ItemsSource = similares;
-                        SecaoJogosSimilares.IsVisible = true;
+                        var similares = await _rawgService.BuscarJogosSimilaresAsync(_jogoAtual);
+                        if (similares != null && similares.Any())
+                        {
+                            ListaJogosSimilares.ItemsSource = similares;
+                            SecaoJogosSimilares.IsVisible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERRO SIMILARES]: {ex.Message}");
                     }
 
-                    var filmesRelacionados = await _crossMediaService.BuscarFilmesDoJogoAsync(_jogoAtual);
-                    if (filmesRelacionados.Any())
+                    // 2. Filmes Relacionados (OMDb)
+                    try
                     {
-                        ListaFilmesRelacionados.ItemsSource = filmesRelacionados;
-                        SecaoFilmesRelacionados.IsVisible = true;
+                        var filmesRelacionados = await _crossMediaService.BuscarFilmesDoJogoAsync(_jogoAtual);
+                        if (filmesRelacionados != null && filmesRelacionados.Any())
+                        {
+                            ListaFilmesRelacionados.ItemsSource = filmesRelacionados;
+                            SecaoFilmesRelacionados.IsVisible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ERRO FILMES]: {ex.Message}");
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[ERRO GERAL CARREGAR]: {ex.Message}");
                 await DisplayAlert("Erro", "Não foi possível carregar os detalhes do jogo.", "OK");
             }
             finally
