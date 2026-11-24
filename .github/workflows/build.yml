@@ -1,0 +1,189 @@
+name: Build (Windows e Android)
+
+# Gera o .exe (Windows) e o .apk (Android) do GeekHub Explorer.
+# - Em pull requests e execuções manuais sem versão: salva nos "Artifacts" da execução.
+# - Para gerar link público na aba Releases do GitHub:
+#   1. No site do GitHub: Actions > Build (Windows e Android) > "Run workflow" > informe a versão (ex.: v1.0.0).
+#   2. Ou crie uma tag pelo Git: git tag v1.0.0 && git push origin v1.0.0
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Versão para publicar na aba Releases (ex.: v1.0.0). Deixe vazio para gerar apenas nos Artifacts."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJETO: "OMDb API.csproj"
+  PASTA_PROJETO: "."
+  NOME_APP: "GeekHub-Explorer"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  windows:
+    name: Windows (.exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Instalar o workload do MAUI
+        run: dotnet workload install maui
+
+      - name: Publicar Windows (Self-Contained Single File)
+        shell: pwsh
+        run: >
+          dotnet publish "$env:PROJETO"
+          -f net10.0-windows10.0.19041.0
+          -c Release
+          -p:RuntimeIdentifierOverride=win-x64
+          -p:WindowsPackageType=None
+          -p:WindowsAppSDKSelfContained=true
+          -p:SelfContained=true
+          -p:EnableMsixTooling=true
+          -p:IncludeAllContentForSelfExtract=true
+          -p:PublishSingleFile=true
+
+      # Mesmo com PublishSingleFile=true, o WinUI/MAUI gera arquivos auxiliares (.pri e DLLs nativas)
+      # na pasta publish que precisam acompanhar o executável ao extrair.
+      - name: Compactar pasta publicada do Windows
+        shell: pwsh
+        run: >
+          Compress-Archive
+          -Path "$env:PASTA_PROJETO/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/*"
+          -DestinationPath "$env:NOME_APP-windows-x64.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NOME_APP }}-windows-x64
+          path: ${{ env.NOME_APP }}-windows-x64.zip
+          if-no-files-found: error
+
+  android:
+    name: Android (.apk)
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      SECRET_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      SECRET_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: "17"
+
+      - name: Instalar o workload do MAUI para Android
+        run: dotnet workload install maui-android
+
+      - name: Preparar a chave de assinatura
+        run: |
+          KEYSTORE="$RUNNER_TEMP/geekhub.keystore"
+          if [ -n "$SECRET_KEYSTORE_B64" ] && [ -n "$SECRET_KEYSTORE_PASS" ]; then
+            echo "$SECRET_KEYSTORE_B64" | base64 -d > "$KEYSTORE"
+            SENHA="$SECRET_KEYSTORE_PASS"
+            ALIAS="${SECRET_KEY_ALIAS:-geekhub}"
+            echo "Usando o keystore configurado nos secrets."
+          else
+            echo "::warning::Secrets do keystore não configurados, gerando chave temporária para assinatura."
+            SENHA="geekhub-temporario"
+            ALIAS="geekhub"
+            keytool -genkeypair -keystore "$KEYSTORE" -alias "$ALIAS" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$SENHA" -keypass "$SENHA" -dname "CN=GeekHub Explorer CI"
+          fi
+          echo "KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "KEYSTORE_PASS=$SENHA" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$ALIAS" >> "$GITHUB_ENV"
+
+      - name: Publicar o APK assinado
+        run: >
+          dotnet publish "$PROJETO"
+          -f net10.0-android
+          -c Release
+          -p:AndroidPackageFormats=apk
+          -p:AndroidKeyStore=true
+          -p:AndroidSigningKeyStore="$KEYSTORE_PATH"
+          -p:AndroidSigningKeyAlias="$KEY_ALIAS"
+          -p:AndroidSigningKeyPass=env:KEYSTORE_PASS
+          -p:AndroidSigningStorePass=env:KEYSTORE_PASS
+
+      - name: Localizar o APK
+        run: |
+          APK=$(find "$PASTA_PROJETO/bin/Release" -name "*-Signed.apk" | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "::error::APK assinado não encontrado. Arquivos gerados:"
+            find "$PASTA_PROJETO/bin/Release" -name "*.apk" -o -name "*.aab"
+            exit 1
+          fi
+          cp "$APK" "$NOME_APP-android.apk"
+
+      - name: Verificar arquitetura do APK
+        run: |
+          ABIS=$(unzip -l "$NOME_APP-android.apk" | awk '{print $4}' | grep '^lib/' | cut -d/ -f2 | sort -u | tr '\n' ' ')
+          echo "::notice::Arquiteturas incluídas no APK: $ABIS"
+          if [[ " $ABIS " != *" arm64-v8a "* ]]; then
+            echo "::error::O APK não contém arm64-v8a."
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NOME_APP }}-android
+          path: ${{ env.NOME_APP }}-android.apk
+          if-no-files-found: error
+
+  release:
+    name: Publicar Release
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.versao != '')
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artefatos
+          merge-multiple: true
+
+      - name: Publicar os arquivos na Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSAO: ${{ inputs.versao || github.ref_name }}
+        run: |
+          if [[ ! "$VERSAO" =~ ^v[0-9] ]]; then
+            echo "::error::A versão \"$VERSAO\" é inválida. Use o formato v1.0.0."
+            exit 1
+          fi
+
+          if gh release view "$VERSAO" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "A Release $VERSAO já existe: atualizando os arquivos."
+            gh release upload "$VERSAO" artefatos/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$VERSAO" artefatos/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "GeekHub Explorer $VERSAO" \
+              --generate-notes
+          fi
