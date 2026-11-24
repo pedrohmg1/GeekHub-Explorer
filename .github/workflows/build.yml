@@ -26,8 +26,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PROJETO: "OMDb API.csproj"
-  PASTA_PROJETO: "."
   NOME_APP: "GeekHub-Explorer"
   DOTNET_NOLOGO: "true"
   DOTNET_CLI_TELEMETRY_OPTOUT: "true"
@@ -46,10 +44,23 @@ jobs:
       - name: Instalar o workload do MAUI
         run: dotnet workload install maui
 
+      - name: Localizar arquivo .csproj
+        id: localizar
+        shell: pwsh
+        run: |
+          $csproj = Get-ChildItem -Recurse -Filter "*.csproj" | Select-Object -First 1
+          if (-not $csproj) {
+            Write-Error "Nenhum arquivo .csproj encontrado no repositório."
+            exit 1
+          }
+          echo "Projeto encontrado: $($csproj.FullName)"
+          "CSPROJ_PATH=$($csproj.FullName)" >> $env:GITHUB_ENV
+          "CSPROJ_DIR=$($csproj.DirectoryName)" >> $env:GITHUB_ENV
+
       - name: Publicar Windows (Self-Contained Single File)
         shell: pwsh
         run: >
-          dotnet publish "$env:PROJETO"
+          dotnet publish "$env:CSPROJ_PATH"
           -f net10.0-windows10.0.19041.0
           -c Release
           -p:RuntimeIdentifierOverride=win-x64
@@ -60,14 +71,15 @@ jobs:
           -p:IncludeAllContentForSelfExtract=true
           -p:PublishSingleFile=true
 
-      # Mesmo com PublishSingleFile=true, o WinUI/MAUI gera arquivos auxiliares (.pri e DLLs nativas)
-      # na pasta publish que precisam acompanhar o executável ao extrair.
       - name: Compactar pasta publicada do Windows
         shell: pwsh
-        run: >
-          Compress-Archive
-          -Path "$env:PASTA_PROJETO/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/*"
-          -DestinationPath "$env:NOME_APP-windows-x64.zip"
+        run: |
+          $pastaPublish = Join-Path $env:CSPROJ_DIR "bin/Release/net10.0-windows10.0.19041.0/win-x64/publish"
+          if (-not (Test-Path $pastaPublish)) {
+            Write-Error "Pasta publish não encontrada em: $pastaPublish"
+            exit 1
+          }
+          Compress-Archive -Path "$pastaPublish/*" -DestinationPath "$env:NOME_APP-windows-x64.zip"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -97,6 +109,18 @@ jobs:
       - name: Instalar o workload do MAUI para Android
         run: dotnet workload install maui-android
 
+      - name: Localizar arquivo .csproj
+        run: |
+          CSPROJ=$(find . -maxdepth 4 -name "*.csproj" | head -n 1)
+          if [ -z "$CSPROJ" ]; then
+            echo "::error::Nenhum arquivo .csproj encontrado no repositório."
+            exit 1
+          fi
+          PASTA=$(dirname "$CSPROJ")
+          echo "Projeto encontrado: $CSPROJ"
+          echo "CSPROJ_PATH=$CSPROJ" >> "$GITHUB_ENV"
+          echo "CSPROJ_DIR=$PASTA" >> "$GITHUB_ENV"
+
       - name: Preparar a chave de assinatura
         run: |
           KEYSTORE="$RUNNER_TEMP/geekhub.keystore"
@@ -119,7 +143,7 @@ jobs:
 
       - name: Publicar o APK assinado
         run: >
-          dotnet publish "$PROJETO"
+          dotnet publish "$CSPROJ_PATH"
           -f net10.0-android
           -c Release
           -p:AndroidPackageFormats=apk
@@ -131,10 +155,10 @@ jobs:
 
       - name: Localizar o APK
         run: |
-          APK=$(find "$PASTA_PROJETO/bin/Release" -name "*-Signed.apk" | head -n 1)
+          APK=$(find "$CSPROJ_DIR/bin/Release" -name "*-Signed.apk" | head -n 1)
           if [ -z "$APK" ]; then
             echo "::error::APK assinado não encontrado. Arquivos gerados:"
-            find "$PASTA_PROJETO/bin/Release" -name "*.apk" -o -name "*.aab"
+            find "$CSPROJ_DIR/bin/Release" -name "*.apk" -o -name "*.aab"
             exit 1
           fi
           cp "$APK" "$NOME_APP-android.apk"
