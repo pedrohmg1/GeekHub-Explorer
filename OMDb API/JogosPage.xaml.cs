@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using OMDb_API.Models;
 using OMDb_API.Services;
+using System.Diagnostics;
 
 namespace OMDb_API
 {
@@ -16,13 +17,17 @@ namespace OMDb_API
 
         private async void JogoEntry_TextChanged(object sender, TextChangedEventArgs e)
         {
-            string termo = e.NewTextValue?.Trim() ?? "";
+            string termo = e.NewTextValue?.Trim() ?? string.Empty;
+
             _cts?.Cancel();
+            _cts?.Dispose();
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
 
             if (termo.Length < 3)
             {
+                LoadingIndicator.IsVisible = false;
+                LoadingIndicator.IsRunning = false;
                 ListaJogos.ItemsSource = null;
                 return;
             }
@@ -30,18 +35,46 @@ namespace OMDb_API
             try
             {
                 await Task.Delay(500, token);
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                LoadingIndicator.IsVisible = true;
+                LoadingIndicator.IsRunning = true;
+
+                var resultados = await _rawgService.BuscarPorNomeAsync(termo);
+
                 if (!token.IsCancellationRequested)
                 {
-                    LoadingIndicator.IsVisible = true;
-                    LoadingIndicator.IsRunning = true;
-                    ListaJogos.ItemsSource = await _rawgService.BuscarPorNomeAsync(termo);
+                    ListaJogos.ItemsSource = resultados;
+
+                    if (resultados.Any())
+                    {
+                        HistoricoBuscaService.RegistrarBusca("jogos", termo);
+                    }
                 }
             }
-            catch (TaskCanceledException) { }
+            catch (TaskCanceledException)
+            {
+                // Ignora buscas canceladas enquanto o usuário ainda está digitando
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[RAWG API Erro]: {ex.Message}");
+
+                if (!token.IsCancellationRequested)
+                {
+                    ListaJogos.ItemsSource = null;
+                    await DisplayAlertAsync("Erro ao buscar jogos", $"Não foi possível consultar a API RAWG.\n\nDetalhes: {ex.Message}", "OK");
+                }
+            }
             finally
             {
-                LoadingIndicator.IsVisible = false;
-                LoadingIndicator.IsRunning = false;
+                if (!token.IsCancellationRequested)
+                {
+                    LoadingIndicator.IsVisible = false;
+                    LoadingIndicator.IsRunning = false;
+                }
             }
         }
 
@@ -50,7 +83,15 @@ namespace OMDb_API
             if (e.CurrentSelection.FirstOrDefault() is Jogo jogo)
             {
                 ListaJogos.SelectedItem = null;
-                await Navigation.PushAsync(new JogoDetalhesPage(jogo.Id));
+
+                try
+                {
+                    await Navigation.PushAsync(new JogoDetalhesPage(jogo.Id));
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Erro", $"Não foi possível abrir os detalhes do jogo: {ex.Message}", "OK");
+                }
             }
         }
     }

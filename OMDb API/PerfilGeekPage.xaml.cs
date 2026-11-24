@@ -244,15 +244,42 @@ namespace OMDb_API
                 "Exportar Minha Coleção Geek",
                 "Cancelar",
                 null,
-                "📄 Compartilhar Resumo em Texto",
-                "💾 Exportar Backup Completo (.JSON)");
+                "💾 Baixar Backup na Pasta Downloads (.JSON)",
+                "📄 Compartilhar Resumo em Texto");
 
             var filmes = _filmesService.ObterLista();
             var jogos = _jogosService.ObterLista();
             var cartas = _pokemonService.ObterLista();
             var livros = _livrosService.ObterLista();
 
-            if (opcao == "📄 Compartilhar Resumo em Texto")
+            if (opcao == "💾 Baixar Backup na Pasta Downloads (.JSON)")
+            {
+                try
+                {
+                    var backup = new
+                    {
+                        ExportadoEm = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                        Filmes = filmes,
+                        Jogos = jogos,
+                        CartasPokemon = cartas,
+                        Livros = livros
+                    };
+
+                    string json = JsonSerializer.Serialize(backup, new JsonSerializerOptions { WriteIndented = true });
+                    string nomeArquivo = $"GeekHub_Backup_{DateTime.Now:yyyyMMdd_HHmm}.json";
+                    string caminhoFinal = await SalvarNaPastaDownloadsAsync(nomeArquivo, json);
+
+                    await DisplayAlertAsync(
+                        "Backup Baixado!",
+                        $"Sua coleção foi salva diretamente na pasta Downloads:\n\n{caminhoFinal}",
+                        "OK");
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Erro ao Salvar", $"Não foi possível salvar o arquivo.\n\nDetalhes: {ex.Message}", "OK");
+                }
+            }
+            else if (opcao == "📄 Compartilhar Resumo em Texto")
             {
                 var sb = new StringBuilder();
                 sb.AppendLine("🏆 MINHA COLEÇÃO — GEEKHUB EXPLORER");
@@ -267,26 +294,93 @@ namespace OMDb_API
                     Text = sb.ToString()
                 });
             }
-            else if (opcao == "💾 Exportar Backup Completo (.JSON)")
+        }
+
+        private static async Task<string> SalvarNaPastaDownloadsAsync(string nomeArquivo, string conteudo)
+        {
+            string pastaDownloads;
+
+#if WINDOWS
+            pastaDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+#elif ANDROID
+            pastaDownloads = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads)?.AbsolutePath
+                             ?? FileSystem.AppDataDirectory;
+#else
+            pastaDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+#endif
+
+            Directory.CreateDirectory(pastaDownloads);
+            string caminhoCompleto = Path.Combine(pastaDownloads, nomeArquivo);
+            await File.WriteAllTextAsync(caminhoCompleto, conteudo, Encoding.UTF8);
+
+            return caminhoCompleto;
+        }
+
+        private async void BotaoImportar_Clicked(object sender, EventArgs e)
+        {
+            try
             {
-                var backup = new
+                var resultado = await FilePicker.Default.PickAsync(new PickOptions
                 {
-                    ExportadoEm = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
-                    Filmes = filmes,
-                    Jogos = jogos,
-                    CartasPokemon = cartas,
-                    Livros = livros
-                };
-
-                string json = JsonSerializer.Serialize(backup, new JsonSerializerOptions { WriteIndented = true });
-                string caminhoArquivo = Path.Combine(FileSystem.CacheDirectory, $"GeekHub_Backup_{DateTime.Now:yyyyMMdd_HHmm}.json");
-                await File.WriteAllTextAsync(caminhoArquivo, json);
-
-                await Share.Default.RequestAsync(new ShareFileRequest
-                {
-                    Title = "Backup JSON — GeekHub Explorer",
-                    File = new ShareFile(caminhoArquivo)
+                    PickerTitle = "Selecione o arquivo de backup (.json) do GeekHub"
                 });
+
+                if (resultado == null)
+                    return;
+
+                if (!resultado.FileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    await DisplayAlertAsync("Arquivo Inválido", "Selecione um arquivo de backup com extensão .json exportado pelo GeekHub Explorer.", "OK");
+                    return;
+                }
+
+                using var stream = await resultado.OpenReadAsync();
+                using var reader = new StreamReader(stream);
+                string json = await reader.ReadToEndAsync();
+
+                var backup = JsonSerializer.Deserialize<GeekHubBackupDto>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (backup == null || (backup.Filmes == null && backup.Jogos == null && backup.CartasPokemon == null && backup.Livros == null))
+                {
+                    await DisplayAlertAsync("Backup Vazio", "O arquivo selecionado não contém dados válidos do GeekHub Explorer.", "OK");
+                    return;
+                }
+
+                string modo = await DisplayActionSheetAsync(
+                    $"Backup de {backup.ExportadoEm ?? "data desconhecida"} encontrado. Como deseja restaurar?",
+                    "Cancelar",
+                    null,
+                    "➕ Mesclar com minha coleção atual (sem duplicar)",
+                    "🔄 Substituir toda a minha coleção atual");
+
+                if (modo != "➕ Mesclar com minha coleção atual (sem duplicar)" &&
+                    modo != "🔄 Substituir toda a minha coleção atual")
+                {
+                    return;
+                }
+
+                bool substituir = modo.StartsWith("🔄");
+
+                _filmesService.ImportarLista(backup.Filmes, substituir);
+                _jogosService.ImportarLista(backup.Jogos, substituir);
+                _pokemonService.ImportarLista(backup.CartasPokemon, substituir);
+                _livrosService.ImportarLista(backup.Livros, substituir);
+
+                AtualizarDashboard();
+
+                int totalImportado = (backup.Filmes?.Count ?? 0) +
+                                     (backup.Jogos?.Count ?? 0) +
+                                     (backup.CartasPokemon?.Count ?? 0) +
+                                     (backup.Livros?.Count ?? 0);
+
+                await DisplayAlertAsync("Sucesso!", $"Restauração concluída ({totalImportado} itens processados no arquivo).", "OK");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Erro ao Importar", $"Não foi possível ler o arquivo de backup.\n\nDetalhes: {ex.Message}", "OK");
             }
         }
 
@@ -317,5 +411,14 @@ namespace OMDb_API
                     break;
             }
         }
+    }
+
+    public class GeekHubBackupDto
+    {
+        public string? ExportadoEm { get; set; }
+        public List<Filme>? Filmes { get; set; }
+        public List<Jogo>? Jogos { get; set; }
+        public List<CartaPokemon>? CartasPokemon { get; set; }
+        public List<Livro>? Livros { get; set; }
     }
 }

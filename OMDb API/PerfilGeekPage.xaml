@@ -20,16 +20,16 @@
                         <Label x:Name="SubtituloPerfil" Text="Resumo consolidado da sua coleção cross-media" FontSize="15" TextColor="#94A3B8"/>
                     </VerticalStackLayout>
 
-                    <HorizontalStackLayout Grid.Column="1" Spacing="12" VerticalOptions="Center">
+                    <HorizontalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center">
                         <Button Text="🎲 Surpreenda-me"
                                 Clicked="BotaoSurpreendaMe_Clicked"
                                 BackgroundColor="#7C3AED"
                                 TextColor="White"
                                 FontAttributes="Bold"
                                 CornerRadius="10"
-                                Padding="18,12"/>
+                                Padding="16,12"/>
 
-                        <Button Text="📤 Exportar Coleção"
+                        <Button Text="📤 Exportar"
                                 Clicked="BotaoExportar_Clicked"
                                 BackgroundColor="#1E293B"
                                 BorderColor="#38BDF8"
@@ -37,7 +37,17 @@
                                 TextColor="#38BDF8"
                                 FontAttributes="Bold"
                                 CornerRadius="10"
-                                Padding="18,12"/>
+                                Padding="16,12"/>
+
+                        <Button Text="📥 Importar"
+                                Clicked="BotaoImportar_Clicked"
+                                BackgroundColor="#1E293B"
+                                BorderColor="#2ECC71"
+                                BorderWidth="1"
+                                TextColor="#2ECC71"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="16,12"/>
                     </HorizontalStackLayout>
                 </Grid>
 

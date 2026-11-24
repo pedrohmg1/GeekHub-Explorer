@@ -1,4 +1,5 @@
 using OMDb_API.Models;
+using System.Security.Authentication;
 using System.Text.Json;
 
 namespace OMDb_API.Services
@@ -9,17 +10,140 @@ namespace OMDb_API.Services
         Task<T?> ObterDetalhesAsync(string id);
     }
 
+    internal static class ApiHttpClient
+    {
+        public static HttpClient Criar(int timeoutSegundos = 15)
+        {
+            var handler = new HttpClientHandler
+            {
+                SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+            };
+
+#if DEBUG
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+#endif
+
+            return new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(timeoutSegundos)
+            };
+        }
+    }
+
     // ==========================================
-    // SERVIÇO 1: OMDb API (FILMES)
+    // SERVIÇO 1: OMDb API (FILMES + SUPORTE A TÍTULOS PT-BR)
     // ==========================================
     public class OmdbService : IMidiaService<Filme>
     {
-        private readonly HttpClient _httpClient = new();
+        private readonly HttpClient _httpClient = ApiHttpClient.Criar(12);
         private const string ApiKey = "206fd699";
 
-        public async Task<List<Filme>> BuscarPorNomeAsync(string termo)
+        private static readonly Dictionary<string, string> TitulosPtParaEn = new(StringComparer.OrdinalIgnoreCase)
         {
-            string url = $"http://www.omdbapi.com/?s={Uri.EscapeDataString(termo)}&apikey={ApiKey}";
+            { "coringa", "Joker" },
+            { "vingadores", "Avengers" },
+            { "os vingadores", "The Avengers" },
+            { "homem aranha", "Spider-Man" },
+            { "homem-aranha", "Spider-Man" },
+            { "homem de ferro", "Iron Man" },
+            { "capitão américa", "Captain America" },
+            { "capitao america", "Captain America" },
+            { "guardiões da galáxia", "Guardians of the Galaxy" },
+            { "guardioes da galaxia", "Guardians of the Galaxy" },
+            { "o cavaleiro das trevas", "The Dark Knight" },
+            { "batman o cavaleiro das trevas", "The Dark Knight" },
+            { "o poderoso chefão", "The Godfather" },
+            { "o poderoso chefao", "The Godfather" },
+            { "a origem", "Inception" },
+            { "interestelar", "Interstellar" },
+            { "clube da luta", "Fight Club" },
+            { "de volta para o futuro", "Back to the Future" },
+            { "senhor dos anéis", "The Lord of the Rings" },
+            { "senhor dos aneis", "The Lord of the Rings" },
+            { "o senhor dos anéis", "The Lord of the Rings" },
+            { "o senhor dos aneis", "The Lord of the Rings" },
+            { "guerra nas estrelas", "Star Wars" },
+            { "velozes e furiosos", "Fast & Furious" },
+            { "um sonho de liberdade", "The Shawshank Redemption" },
+            { "a espera de um milagre", "The Green Mile" },
+            { "o rei leão", "The Lion King" },
+            { "o rei leao", "The Lion King" },
+            { "procurando nemo", "Finding Nemo" },
+            { "divertida mente", "Inside Out" },
+            { "os incríveis", "The Incredibles" },
+            { "os incriveis", "The Incredibles" },
+            { "meu malvado favorito", "Despicable Me" },
+            { "a era do gelo", "Ice Age" },
+            { "se beber não case", "The Hangover" },
+            { "se beber nao case", "The Hangover" },
+            { "as branquelas", "White Chicks" },
+            { "esqueceram de mim", "Home Alone" },
+            { "curtindo a vida adoidado", "Ferris Bueller's Day Off" },
+            { "o exterminador do futuro", "The Terminator" },
+            { "duro de matar", "Die Hard" },
+            { "caça-fantasmas", "Ghostbusters" },
+            { "caca fantasmas", "Ghostbusters" },
+            { "tubarão", "Jaws" },
+            { "tubarao", "Jaws" },
+            { "o iluminado", "The Shining" },
+            { "invocação do mal", "The Conjuring" },
+            { "invocacao do mal", "The Conjuring" },
+            { "it a coisa", "It" },
+            { "pânico", "Scream" },
+            { "panico", "Scream" },
+            { "jogos mortais", "Saw" },
+            { "jogos vorazes", "The Hunger Games" },
+            { "crepúsculo", "Twilight" },
+            { "crepusculo", "Twilight" },
+            { "piratas do caribe", "Pirates of the Caribbean" },
+            { "planeta dos macacos", "Planet of the Apes" },
+            { "o lobo de wall street", "The Wolf of Wall Street" },
+            { "bastardos inglórios", "Inglourious Basterds" },
+            { "bastardos inglorios", "Inglourious Basterds" },
+            { "django livre", "Django Unchained" },
+            { "o grande truque", "The Prestige" },
+            { "duna", "Dune" },
+            { "parasita", "Parasite" },
+            { "a viagem de chihiro", "Spirited Away" },
+            { "meu amigo totoro", "My Neighbor Totoro" }
+        };
+
+        private async Task<string> TraduzirTituloParaInglesAsync(string termoOriginal)
+        {
+            string limpo = termoOriginal.Trim();
+
+            if (TitulosPtParaEn.TryGetValue(limpo, out string? tituloMapeado))
+                return tituloMapeado;
+
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                string urlTraducao = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(limpo)}&langpair=pt|en";
+                string json = await _httpClient.GetStringAsync(urlTraducao, cts.Token);
+
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("responseData", out var responseData) &&
+                    responseData.TryGetProperty("translatedText", out var translatedProp))
+                {
+                    string? traduzido = translatedProp.GetString()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(traduzido) &&
+                        !traduzido.Contains("MYMEMORY", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return traduzido;
+                    }
+                }
+            }
+            catch
+            {
+                // Mantém o termo original se o tradutor falhar ou exceder 3 segundos
+            }
+
+            return limpo;
+        }
+
+        private async Task<List<Filme>> ConsultarOmdbDiretoAsync(string termo)
+        {
+            string url = $"https://www.omdbapi.com/?s={Uri.EscapeDataString(termo)}&apikey={ApiKey}";
             string json = await _httpClient.GetStringAsync(url);
             var dto = JsonSerializer.Deserialize<OmdbSearchResponseDto>(json);
 
@@ -37,9 +161,41 @@ namespace OMDb_API.Services
                 }).ToList();
         }
 
+        public async Task<List<Filme>> BuscarPorNomeAsync(string termo)
+        {
+            if (string.IsNullOrWhiteSpace(termo))
+                return new List<Filme>();
+
+            string termoOriginal = termo.Trim();
+            string termoIngles = await TraduzirTituloParaInglesAsync(termoOriginal);
+
+            if (string.Equals(termoOriginal, termoIngles, StringComparison.OrdinalIgnoreCase))
+            {
+                return await ConsultarOmdbDiretoAsync(termoOriginal);
+            }
+
+            var tarefaIngles = ConsultarOmdbDiretoAsync(termoIngles);
+            var tarefaOriginal = ConsultarOmdbDiretoAsync(termoOriginal);
+
+            await Task.WhenAll(tarefaIngles, tarefaOriginal);
+
+            var combinados = new List<Filme>();
+            var idsAdicionados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var filme in tarefaIngles.Result.Concat(tarefaOriginal.Result))
+            {
+                if (!string.IsNullOrEmpty(filme.Id) && idsAdicionados.Add(filme.Id))
+                {
+                    combinados.Add(filme);
+                }
+            }
+
+            return combinados;
+        }
+
         public async Task<Filme?> ObterDetalhesAsync(string id)
         {
-            string url = $"http://www.omdbapi.com/?i={id}&apikey={ApiKey}";
+            string url = $"https://www.omdbapi.com/?i={id}&apikey={ApiKey}";
             string json = await _httpClient.GetStringAsync(url);
             var dto = JsonSerializer.Deserialize<OmdbDetailDto>(json);
 
@@ -68,7 +224,7 @@ namespace OMDb_API.Services
     // ==========================================
     public class RawgService : IMidiaService<Jogo>
     {
-        private readonly HttpClient _httpClient = new();
+        private readonly HttpClient _httpClient = ApiHttpClient.Criar(15);
         private const string ApiKey = "3a0594ffd6cc4ffba21454ed25009ecc";
 
         private static readonly HashSet<string> TagsBloqueadas = new(StringComparer.OrdinalIgnoreCase)
@@ -338,6 +494,30 @@ namespace OMDb_API.Services
             lista.RemoveAll(x => x.Id == id);
             SalvarLista(lista);
         }
+
+        public void ImportarLista(List<T>? itensImportados, bool substituir)
+        {
+            if (itensImportados == null) return;
+
+            if (substituir)
+            {
+                SalvarLista(itensImportados);
+                return;
+            }
+
+            var listaAtual = ObterLista();
+            var idsExistentes = new HashSet<string>(listaAtual.Select(x => x.Id), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in itensImportados)
+            {
+                if (!string.IsNullOrEmpty(item.Id) && idsExistentes.Add(item.Id))
+                {
+                    listaAtual.Add(item);
+                }
+            }
+
+            SalvarLista(listaAtual);
+        }
     }
 
     // Especialização 1: Filmes (Assistir no Futuro)
@@ -398,10 +578,7 @@ namespace OMDb_API.Services
     // ==========================================
     public class PokemonService : IMidiaService<CartaPokemon>
     {
-        private readonly HttpClient _httpClient = new()
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
+        private readonly HttpClient _httpClient = ApiHttpClient.Criar(15);
 
         public async Task<List<CartaPokemon>> BuscarPorNomeAsync(string termo)
         {
@@ -486,10 +663,7 @@ namespace OMDb_API.Services
     // ==========================================
     public class OpenLibraryService : IMidiaService<Livro>
     {
-        private readonly HttpClient _httpClient = new()
-        {
-            Timeout = TimeSpan.FromSeconds(15)
-        };
+        private readonly HttpClient _httpClient = ApiHttpClient.Criar(15);
 
         public async Task<List<Livro>> BuscarPorNomeAsync(string termo)
         {
